@@ -1,0 +1,5 @@
+name: iSAAC_align
+channels:
+  - bioconda
+dependencies:
+  - isaac4=04.18.11.09

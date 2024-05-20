@@ -1,0 +1,16 @@
+name: RapidQC_preprocessing
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11.3
+  - cython
+  - psutil
+  - seqtk=1.4
+  - fastqc=0.11.9
+  - pip
+  - pip:
+      - git+https://github.com/wjlim/dedup_rate_predict.git
+      - matplotlib
+      - pandas

@@ -1,0 +1,5 @@
+{
+    "fasta": "/mnt/lustre2/Tools/WGS_Analysis/Reference/hg38/Sequence/genome.fa",
+    "fai": "/mnt/lustre2/Tools/WGS_Analysis/Reference/hg38/Sequence/genome.fa.fai",
+    "dict": "/mnt/lustre2/Tools/WGS_Analysis/Reference/hg38/Sequence/genome.dict",
+}
