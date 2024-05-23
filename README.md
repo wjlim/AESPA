@@ -1,8 +1,7 @@
 # AESPA: Accurate and Efficient Sub-sampling Pipeline for WGS analysis
 
 ## Overview
-This pipeline is designed to perform quality control (QC) for whole genome sequencing (WGS) data by conducting 3x subsampling.
-![flowchart](./Figure/flow_chart.png)
+This pipeline is designed to perform quality control (QC) for whole genome sequencing (WGS) data by conducting 3x subsampling. 
 The entire workflow is modularized using Nextflow.
 
 ## 🌟 Features
@@ -29,7 +28,6 @@ wgs_qc
 │   ├── sqs_generate.py
 │   ├── stat_summary.py
 │   ├── subsampler.sh
-│   ├── subsampling.py
 │   └── summary_stat.py
 ├── conf
 │   ├── reference.json
@@ -42,14 +40,7 @@ wgs_qc
 ├── src
 │   ├── genome.dict
 │   ├── genome.fa
-│   ├── genome.fa.amb
-│   ├── genome.fa.ann
-│   ├── genome.fa.bwt
 │   ├── genome.fa.fai
-│   ├── genome.fa.pac
-│   ├── genome.fa.sa
-│   ├── genome.gff
-│   ├── genome.gtf
 │   └── sorted-reference.xml
 └── workflow
     ├── bam_stat_calculation.nf
@@ -68,7 +59,7 @@ wgs_qc
 ## 🛠 Installation
 
 ```sh
-cd workflow/
+conda install git
 conda env create -f workflow/preprocessing.yml
 conda env create -f workflow/iSAAC_pipeline.yml
 conda env create -f workflow/bam_stat_calculation.yml
@@ -87,44 +78,47 @@ To run the pipeline with local environments:
 ```sh
 nextflow run main.nf -profile sge_local_env --json_file input.json
 ```
-
-### Example input.json
-```json
-{
-    "raw_forward_input": "/your/input_R1.fastq.gz",
-    "raw_reverse_input": "/your/input_R2.fastq.gz",
-    "sample_sheet": "/path/your/SampleSheet.csv",
-    "sample_id": "test",
-    "result_dir": "/path/your/output"
-}
+### Running the pipeline with Wrapper
+```
+call_AESPA_pipeline.sh -s sample_sheet.csv -f forward_read -r reverse_read -o output_dir
 ```
 
-### Example Script
+### Wrapper Script
 
 ```sh
 #!/bin/bash
-outdir=test
-work=$outdir/work
-json_file=input.json
-nf_temp=$outdir/temp
-export NXF_WORK=$work
-export NXF_TEMP=$nf_temp
-export NXF_OFFLINE=true # if it is not connected to internet.
+CONDA_BASE=$(conda info --base)
+source "$CONDA_BASE/etc/profile.d/conda.sh"
 
-mkdir -p $outdir
-mkdir -p $work
-mkdir -p $nf_temp
+# Call the Nextflow pipeline
+src_dir=$(dirname $(readlink -f $0))
+working_dir=${result_dir}/work
+nf_temp=${result_dir}/temp
+export NXF_WORK=${working_dir}
+export NXF_TEMP=${nf_temp}
+export NXF_CACHE_DIR=${working_dir}/.nextflow
+export NXF_LOG_FILE=${working_dir}/.nextflow.log
+export NXF_PLUGINS_DIR=${working_dir}/plr
+export NXF_HOME=${working_dir}/.nextflow
+# export NXF_OFFLINE=true
 
-nextflow run main.nf \
+mkdir -p ${result_dir}
+mkdir -p ${working_dir}
+mkdir -p ${nf_temp}
+
+nextflow run ${src_dir}/main.nf \
     -profile sge_conda_env \
-    --json_file $json_file \
-    -with-report "$outdir/reports/nf_out.report.html" \
-    -with-dag "$outdir/reports/flowchart.png" \
-    -with-timeline "$outdir/reports/nf_out.timeline.report.html" \
-    --log "$outdir/nxf.log" \
-    -resume \
-    -with-trace "$outdir/reports/trace.txt" \
-    &> $outdir/run.log.txt
+    --sample_sheet "${sample_sheet}" \
+    --forward_read "${forward_read}" \
+    --reverse_read "${reverse_read}" \
+    --result_dir "${result_dir}" \
+    -with-report "${result_dir}/reports/nf_out.report.html" \
+    -with-dag "${result_dir}/reports/flowchart.png" \
+    -with-timeline "${result_dir}/reports/nf_out.timeline.report.html" \
+    -with-trace "${result_dir}/reports/nf_out.trace.txt" \
+    -bg \
+    -resume &> "${result_dir}/runLog.txt"
+
 ```
 
 ## 🧬 Workflow Details

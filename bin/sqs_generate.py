@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import multiprocessing
 import argparse
 import gzip
@@ -47,7 +47,6 @@ class FASTQStatsCalculator:
         if chunk:
             yield chunk
 
-    @staticmethod
     def process_sequence_chunk(sequences):
         base_counter, num_reads, q20_counter, q30_counter = Counter(), 0, 0, 0
         for i, sequence in enumerate(sequences):
@@ -69,7 +68,6 @@ class FASTQStatsCalculator:
             total_q30_count += q30_count
         return total_count, total_num_reads, total_q20_count, total_q30_count
 
-    @staticmethod
     def write_stats(output_file, sample_name, stats, write_mode='w'):
         total_bases, total_reads, q20_bases, q30_bases = stats
         total_num = sum(total_bases.values())

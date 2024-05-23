@@ -2,18 +2,15 @@
 
 workflow iSAAC_alignment_workflow {
     take:
-    input_ch
+    preprocess_ch
     ref_ch
-    sample_sheet
-    processed_dir
 
     main:
-    sample_sheet_convert_for_iSAAC(sample_sheet)
-    iSAAC_alignment(input_ch, ref_ch, sample_sheet_convert_for_iSAAC.out, processed_dir)
-    
+    sample_sheet_convert_for_iSAAC(preprocess_ch)
+    iSAAC_alignment(preprocess_ch, ref_ch, sample_sheet_convert_for_iSAAC.out)
+
     emit:
-    sorted_bam = iSAAC_alignment.out.sorted_bam
-    sorted_bai = iSAAC_alignment.out.sorted_bai
+    iSAAC_alignment.out
 }
 
 process sample_sheet_convert_for_iSAAC {
@@ -21,7 +18,7 @@ process sample_sheet_convert_for_iSAAC {
     label "process_local"
 
     input:
-    path sample_sheet
+    tuple val(meta), path(preprocessed_dir)
 
     output:
     path '*.csv'
@@ -39,25 +36,23 @@ process sample_sheet_convert_for_iSAAC {
             split(\$8, a, "-")
             \$8 = a[1] "-" a[4]
             print
-        }' ${sample_sheet} > iSAAC_sample_sheet.csv
+        }' ${meta.sample_sheet_path} > iSAAC_sample_sheet.csv
     """
 }
 
 process iSAAC_alignment {
-    label "process_high"
-    tag "iSAAC_alignment for ${sample_id}"
+    label "process_medium"
+    tag "iSAAC_alignment for ${meta.id}"
     conda "${baseDir}/workflow/iSAAC_pipeline.yml"
-    publishDir "${output_dir}", mode: "copy"
+    publishDir "${meta.result_dir}", mode: "copy"
 
     input:
-    tuple val(sample_id), path(forward_read), path(reverse_read), path(output_dir)
+    tuple val(meta), path(preprocessed_dir)
     tuple path(reference_fasta), path(reference_fai), path(reference_dict)
     path converted_sample_sheet
-    path processed_dir
 
     output:
-    path "IsaacAlignment/Projects/*/*/sorted.bam", emit: sorted_bam
-    path "IsaacAlignment/Projects/*/*/sorted.bam.bai", emit: sorted_bai
+    tuple val(meta), path("IsaacAlignment/Projects/*/*/sorted.bam"), path("IsaacAlignment/Projects/*/*/sorted.bam.bai")
     
     script:
     def iSAAC_memory = "${task.memory}".replaceAll("\\D+", "")
@@ -79,7 +74,7 @@ process iSAAC_alignment {
     --memory-control warning \\
     --output-directory IsaacAlignment \\
     --temp-directory \$iSAAC_temp \\
-    -b ${processed_dir} \\
+    -b ${preprocessed_dir} \\
     --base-calls-format fastq-gz \\
     --sample-sheet ${converted_sample_sheet} \\
     --bam-gzip-level 7 \\

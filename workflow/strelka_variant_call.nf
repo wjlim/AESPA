@@ -18,12 +18,12 @@ workflow variant_calling {
 
 process variant_call {
     label "process_medium"
-    tag "strelka variant call for ${sample_id}"
-    publishDir "${output_dir}", mode: "copy"
+    tag "strelka variant call for ${meta.id}"
+    publishDir "${meta.result_dir}", mode: "copy"
     conda "${basdDir}/workflow/strelka_variant_call.yml"
     
     input:
-    tuple val(sample_id), path(out_bam), path(out_bai), path(output_dir)
+    tuple val(meta), path(out_bam), path(out_bai)
     tuple path(ref), path(ref_fai), path(ref_dict)
 
     output:
@@ -52,17 +52,17 @@ process variant_call {
 
 process pass_filter {
     label "process_single"
-    tag "pass filter for ${sample_id}"
+    tag "pass filter for ${meta.id}"
     conda "${basdDir}/workflow/strelka_variant_call.yml"
-    publishDir "${output_dir}/stat_outputs", mode: "copy"
-    publishDir "${output_dir}/VCF", mode: "copy"
+    publishDir "${meta.result_dir}/stat_outputs", mode: "copy"
+    publishDir "${meta.result_dir}/VCF", mode: "copy"
 
     input:
-    tuple val(sample_id), path(out_bam), path(out_bai), path(output_dir)
+    tuple val(meta), path(out_bam), path(out_bai)
     path raw_vcf_file
 
     output:
-    path "all_passed_variants.vcf", emit: filtered_vcf
+    tuple val(meta), path("all_passed_variants.vcf"), emit: filtered_vcf
 
     script:
     """

@@ -2,73 +2,83 @@
 
 workflow preprocessing {
     take:
-    input_ch
+    reads
 
     main:
-    md5check_sum(input_ch)
-    sqs_calc(input_ch)
-    calc_fastqc(input_ch)
-    estimate_total_read(input_ch)
-    subsampling(input_ch, estimate_total_read.out)
-    calc_dedup_rates(input_ch)
-    
+    md5check_sum(reads)
+    sqs_calc(reads)
+    calc_fastqc(reads)
+    estimate_total_read(reads)
+    calc_dedup_rates(reads)
+    (processed_dir , processed_files) = subsampling(reads, estimate_total_read.out)
+
     emit:
-    processed_dir = subsampling.out.preprocess_dir
-    kmer_stats = calc_dedup_rates.out.dedup_out
-    sqs_file = sqs_calc.out
+    processed_dir
+    calc_dedup_rates.out.dedup_out
+    sqs_calc.out
 }
 
 process md5check_sum {
     label "process_local"
-    publishDir "${output_dir}/Fastq", mode: "copy"
-    tag "MD5 check for ${sample_id}"
+    publishDir "${meta.result_dir}/Fastq", mode: "copy"
+    tag "MD5 check for ${meta.id}"
 
 
     input:
-    tuple val(sample_id), path(forward_read), path(reverse_read), path(output_dir)
+    tuple val(meta), path(forward_read), path(reverse_read)
 
     output:
     path "*.md5"
 
     script:
     """
-    md5sum ${forward_read} > ${sample_id}.md5
-    md5sum ${reverse_read} >> ${sample_id}.md5
+    md5sum ${forward_read} > ${meta.id}.md5
+    md5sum ${reverse_read} >> ${meta.id}.md5
     """
 }
 
 process sqs_calc {
     label "process_medium"
 
-    publishDir "${output_dir}/Fastq", mode: 'copy'
-    publishDir "${output_dir}/stat_outputs", mode: 'copy'
-    tag "SQS calculation for ${sample_id}"
+    publishDir "${meta.result_dir}/Fastq", mode: 'copy'
+    publishDir "${meta.result_dir}/stat_outputs", mode: 'copy'
+    tag "SQS calculation for ${meta.id}"
 
     input:
-    tuple val(sample_id), path(forward_read), path(reverse_read), path(output_dir)
+    tuple val(meta), path(forward_read), path(reverse_read)
 
     output:
-    path '*.sqs'
+    path "${meta.id}.sqs"
 
     script:
     """
-    sqs_generate.py \\
-        -f ${forward_read} \\
-        -r ${reverse_read} \\
-        -o ${sample_id}.sqs \\
-        -s ${sample_id} \\
-        -t ${task.cpus}
+    # Define the output SQS file path
+    sqs_file="${forward_read.getParent()}/${meta.id}.sqs"
+
+    # Check if the SQS file exists
+    if [ -f \${sqs_file} ]; then
+        # If it exists, copy it to the output directory
+        cp \${sqs_file} ./
+    else
+        # If it does not exist, generate it
+        sqs_generate.py \\
+            -f ${forward_read} \\
+            -r ${reverse_read} \\
+            -o ${meta.id}.sqs \\
+            -s ${meta.id} \\
+            -t ${task.cpus}
+    fi
     """
 }
 
 process calc_fastqc {
     label "process_low"
     conda "${baseDir}/workflow/preprocessing.yml"
-    tag "FastQC analysis for ${sample_id}"
-    publishDir "${output_dir}/Fastq/Fastqc", mode: 'copy'
+    tag "FastQC analysis for ${meta.id}"
+    publishDir "${meta.result_dir}/Fastq/Fastqc", mode: 'copy'
 
     input:
-    tuple val(sample_id), path(forward_read), path(reverse_read), path(output_dir)
+    tuple val(meta), path(forward_read), path(reverse_read)
 
     output:
     path 'Fastqc/*.zip'
@@ -85,7 +95,7 @@ process estimate_total_read {
     label "process_single"
     tag "Estimating number of total reads for subsampling"
     input:
-    tuple val(sample_id), path(forward_read), path(reverse_read), path(output_dir)
+    tuple val(meta), path(forward_read), path(reverse_read)
 
     output:
     stdout
@@ -106,21 +116,21 @@ process estimate_total_read {
 
 process subsampling {
     label "process_low"
-    tag "3X subsampling for ${sample_id}"
+    tag "3X subsampling for ${meta.id}"
     conda "${baseDir}/workflow/preprocessing.yml"
-    // publishDir "${output_dir}", mode: 'copy'
+    // publishDir "${meta.result_dir}", mode: 'copy'
 
     input:
-    tuple val(sample_id), path(forward_read), path(reverse_read), path(output_dir)
+    tuple val(meta), path(forward_read), path(reverse_read)
     val total_read
 
     output:
-    path "preprocessed_raw_data/*.gz", emit: preprocess_files
-    path "preprocessed_raw_data", emit: preprocess_dir
+    tuple val(meta), path("preprocessed_raw_data/")
+    path "preprocessed_raw_data/*.gz"
 
     script:
     """
-    mkdir -p preprocessed_raw_data
+    mkdir -p preprocessed_raw_data/
     subsampler.sh \\
     -i ${forward_read} \\
     -a ${reverse_read} \\
@@ -133,20 +143,20 @@ process subsampling {
 
 process calc_dedup_rates {
     label "process_small"
-    tag "calculating calc_dedup_rates for ${sample_id}"
-    publishDir "${output_dir}", mode: 'copy'
+    tag "calculating calc_dedup_rates for ${meta.id}"
+    publishDir "${meta.result_dir}", mode: 'copy'
     conda "${baseDir}/workflow/preprocessing.yml"
 
     input:
-    tuple val(sample_id), path(forward_read), path(reverse_read), path(output_dir)
+    tuple val(meta), path(forward_read), path(reverse_read)
 
     output:
-    path "${sample_id}.kmer_stats.csv", emit: dedup_out
+    path "${meta.id}.kmer_stats.csv", emit: dedup_out
 
     script:
     """
-    kmer_processor \\
+    dedup_rate_predict \\
     -f ${forward_read} \\
-    -o ${sample_id}.kmer_stats.csv
+    -o ${meta.id}.kmer_stats.csv
     """
 }

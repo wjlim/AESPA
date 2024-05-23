@@ -2,12 +2,9 @@
 
 workflow make_qc_summary {
     take:
-    sample_id
-    order_num
-    lib_group
+    filtered_vcf_ch
     sqs_file
     kmer_out
-    out_vcf
     flagstat_out
     picard_insertsize
     GATK_DOC
@@ -16,12 +13,9 @@ workflow make_qc_summary {
 
     main:
     summary_qc(
-        sample_id,
-        order_num,
-        lib_group,
+        filtered_vcf_ch,
         sqs_file,
         kmer_out,
-        out_vcf,
         flagstat_out,
         picard_insertsize,
         GATK_DOC,
@@ -32,20 +26,17 @@ workflow make_qc_summary {
 
 process summary_qc {
     label "process_single"
-    publishDir "${input.result_dir}", mode: "copy"
+    publishDir "${meta.result_dir}", mode: "copy"
     conda "${baseDir}/workflow/preprocessing.yml"
     
     input:
-    val sample_id
-    val order_num
-    val lib_group
+    tuple val(meta), path(out_vcf)
     path sqs_file
     path kmer_out
     path flagstat_out
     path picard_insertsize
     path GATK_DOC
     path freemix_out
-    path out_vcf
     path doc_distance_out_file
 
     output:
@@ -62,8 +53,8 @@ process summary_qc {
         -i ${doc_distance_out_file} \\
         -x ${freemix_out} \\
         -v ${out_vcf} \\
-        -a ${order_num} \\
-        -l ${lib_group} \\
-        -o ${sample_id}.QC.summary
+        -a ${meta.order_num} \\
+        -l ${meta.lib_group} \\
+        -o ${meta.id}.QC.summary
     """
 }
