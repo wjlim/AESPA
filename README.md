@@ -2,7 +2,10 @@
 
 ## Overview
 This pipeline is designed to perform quality control (QC) for whole genome sequencing (WGS) data by conducting 3x subsampling. 
+![flowchart](Figure/flow_chart.png)
 The entire workflow is modularized using Nextflow.
+
+
 
 ## 🌟 Features
 Efficient QC Processing: Subsampling and QC for WGS data.
