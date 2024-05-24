@@ -20,7 +20,7 @@ process variant_call {
     label "process_medium"
     tag "strelka variant call for ${meta.id}"
     publishDir "${meta.result_dir}", mode: "copy"
-    conda "${basdDir}/workflow/strelka_variant_call.yml"
+    conda "${baseDir}/workflow/strelka_variant_call.yml"
     
     input:
     tuple val(meta), path(out_bam), path(out_bai)
@@ -53,7 +53,7 @@ process variant_call {
 process pass_filter {
     label "process_single"
     tag "pass filter for ${meta.id}"
-    conda "${basdDir}/workflow/strelka_variant_call.yml"
+    conda "${baseDir}/workflow/strelka_variant_call.yml"
     publishDir "${meta.result_dir}/stat_outputs", mode: "copy"
     publishDir "${meta.result_dir}/VCF", mode: "copy"
 
