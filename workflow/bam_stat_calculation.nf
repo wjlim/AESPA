@@ -24,7 +24,7 @@ workflow calc_bams {
 process calc_freemix_values {
     label "process_low"
     tag "calc freemix for ${meta.id}"
-    conda "${baseDir}/workflow/bam_stat_calculation.yml"
+    conda "${baseDir}/conf/bam_stat_calculation.yml"
     publishDir "${meta.result_dir}/stat_outputs", mode: 'copy'
 
     input:
@@ -56,7 +56,7 @@ process calc_freemix_values {
 process calc_genome_coverage {
     label "process_single"
     publishDir "${meta.result_dir}/stat_outputs", mode: 'copy'
-    conda "${baseDir}/workflow/bam_stat_calculation.yml"
+    conda "${baseDir}/conf/bam_stat_calculation.yml"
 
     input:
     tuple val(meta), path(out_bam), path(out_bai)
@@ -107,7 +107,7 @@ process calc_distance {
     label "process_single"
     publishDir "${meta.result_dir}/stat_outputs", mode: 'copy'
     tag "depth of coverage distance for ${meta.id}"
-    conda "${baseDir}/workflow/bam_stat_calculation.yml"
+    conda "${baseDir}/conf/bam_stat_calculation.yml"
 
     input:
     tuple val(meta), path(out_bam), path(out_bai)
@@ -128,7 +128,7 @@ process calc_PE_insert_size {
     label "process_low"
     publishDir "${meta.result_dir}/stat_outputs", mode: 'copy'
     tag "Picard insertsize calculation for ${meta.id}"
-    conda "${baseDir}/workflow/bam_stat_calculation.picard.yml"
+    conda "${baseDir}/conf/bam_stat_calculation.picard.yml"
 
     input:
     tuple val(meta), path(out_bam), path(out_bai)
@@ -151,7 +151,7 @@ process calc_samtools_flagstat {
     label "process_single"
     tag "samtools flagstats for ${meta.id}"
     publishDir "${meta.result_dir}/stat_outputs", mode: 'copy'
-    conda "${baseDir}/workflow/bam_stat_calculation.yml"
+    conda "${baseDir}/conf/bam_stat_calculation.yml"
 
     input:
     tuple val(meta), path(out_bam), path(out_bai)

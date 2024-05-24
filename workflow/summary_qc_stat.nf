@@ -27,7 +27,7 @@ workflow make_qc_summary {
 process summary_qc {
     label "process_single"
     publishDir "${meta.result_dir}", mode: "copy"
-    conda "${baseDir}/workflow/preprocessing.yml"
+    conda "${baseDir}/conf/preprocessing.yml"
     
     input:
     tuple val(meta), path(out_vcf)

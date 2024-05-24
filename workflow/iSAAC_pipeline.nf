@@ -43,7 +43,7 @@ process sample_sheet_convert_for_iSAAC {
 process iSAAC_alignment {
     label "process_medium"
     tag "iSAAC_alignment for ${meta.id}"
-    conda "${baseDir}/workflow/iSAAC_pipeline.yml"
+    conda "${baseDir}/conf/iSAAC_pipeline.yml"
     publishDir "${meta.result_dir}", mode: "copy"
 
     input:

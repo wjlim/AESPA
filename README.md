@@ -63,11 +63,11 @@ wgs_qc
 
 ```sh
 conda install git
-conda env create -f workflow/preprocessing.yml
-conda env create -f workflow/iSAAC_pipeline.yml
-conda env create -f workflow/bam_stat_calculation.yml
-conda env create -f workflow/strelka_variant_call.yml
-conda env create -f workflow/summary_qc_stat.yml
+conda env create -f conf/preprocessing.yml
+conda env create -f conf/iSAAC_pipeline.yml
+conda env create -f conf/bam_stat_calculation.yml
+conda env create -f conf/strelka_variant_call.yml
+conda env create -f conf/summary_qc_stat.yml
 ```
 
 ## 🚀 Usage

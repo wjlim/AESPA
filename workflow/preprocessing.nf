@@ -73,7 +73,7 @@ process sqs_calc {
 
 process calc_fastqc {
     label "process_low"
-    conda "${baseDir}/workflow/preprocessing.yml"
+    conda "${baseDir}/conf/preprocessing.yml"
     tag "FastQC analysis for ${meta.id}"
     publishDir "${meta.result_dir}/Fastq/Fastqc", mode: 'copy'
 
@@ -117,7 +117,7 @@ process estimate_total_read {
 process subsampling {
     label "process_low"
     tag "3X subsampling for ${meta.id}"
-    conda "${baseDir}/workflow/preprocessing.yml"
+    conda "${baseDir}/conf/preprocessing.yml"
     // publishDir "${meta.result_dir}", mode: 'copy'
 
     input:
@@ -145,7 +145,7 @@ process calc_dedup_rates {
     label "process_small"
     tag "calculating calc_dedup_rates for ${meta.id}"
     publishDir "${meta.result_dir}", mode: 'copy'
-    conda "${baseDir}/workflow/preprocessing.yml"
+    conda "${baseDir}/conf/preprocessing.yml"
 
     input:
     tuple val(meta), path(forward_read), path(reverse_read)
