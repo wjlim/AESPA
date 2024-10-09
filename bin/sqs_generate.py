@@ -1,129 +1,159 @@
-#!/usr/bin/env python3
-import multiprocessing
-import argparse
-import gzip
-from collections import Counter
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <zlib.h>
+#include <pthread.h>
+#include <ctype.h>
 
-class FASTQStatsCalculator:
-    def __init__(self, forward_read, reverse_read, sample_name, output_file, threads, chunk_size, block_size):
-        self.forward_read = forward_read
-        self.reverse_read = reverse_read
-        self.sample_name = sample_name
-        self.output_file = output_file
-        self.threads = threads
-        self.chunk_size = chunk_size
-        self.block_size = block_size
+#define BLOCK_SIZE 1024 * 1024  // 1MB buffer size
 
-    def sequence_generator(self, file_path):
-        with gzip.open(file_path, 'rt') as f:
-            block = ""
-            while True:
-                new_block = f.read(self.block_size)
-                if not new_block and not block:
-                    break
-                block += new_block
-                lines = block.split('\n')
-                pos = block.rfind('\n')
-                nlines = len(lines)
-                
-                if pos != nlines - 1:
-                    remainder = f.readline()
-                    last_incomplete_line = lines.pop(-1) + remainder
-                    lines.append(last_incomplete_line)
-                    
-                complete_lines_count = nlines - (nlines % 4)
-                for i in range(1, complete_lines_count, 2):
-                    seq = lines[i].strip()
-                    yield seq
-                block = '\n'.join(lines[complete_lines_count:])
+typedef struct {
+    char *forward_read;
+    char *reverse_read;
+    char *sample_name;
+    char *output_file;
+    int threads;
+} Args;
 
-    def chunked_sequences_generator(self, file_path):
-        chunk = []
-        for sequence in self.sequence_generator(file_path):
-            chunk.append(sequence)
-            if len(chunk) == self.chunk_size:
-                yield chunk
-                chunk = []
-        if chunk:
-            yield chunk
+typedef struct {
+    unsigned long long total_bases[256];
+    unsigned long long total_reads;
+    unsigned long long q20_bases;
+    unsigned long long q30_bases;
+} Stats;
 
-    def process_sequence_chunk(sequences):
-        base_counter, num_reads, q20_counter, q30_counter = Counter(), 0, 0, 0
-        for i, sequence in enumerate(sequences):
-            if i % 2 == 0:
-                base_counter.update(sequence)
-                num_reads += 1
-            else:
-                q30_counter += sum(ord(char) - 33 >= 30 for char in sequence)
-                q20_counter += sum(ord(char) - 33 >= 20 for char in sequence)
-        return base_counter, num_reads, q20_counter, q30_counter
+void update_stats(Stats *stats, const char *seq, const char *qual) {
+    for (size_t i = 0; seq[i] != '\0'; ++i) {
+        stats->total_bases[(unsigned char)seq[i]]++;
+        if ((qual[i] - 33) >= 20) {
+            stats->q20_bases++;
+        }
+        if ((qual[i] - 33) >= 30) {
+            stats->q30_bases++;
+        }
+    }
+    stats->total_reads++;
+}
 
-    def process_file(self, file_path, pool):
-        total_count, total_num_reads, total_q20_count, total_q30_count = Counter(), 0, 0, 0
-        for result in pool.imap_unordered(self.process_sequence_chunk, self.chunked_sequences_generator(file_path)):
-            base_counter, num_reads, q20_count, q30_count = result
-            total_count.update(base_counter)
-            total_num_reads += num_reads
-            total_q20_count += q20_count
-            total_q30_count += q30_count
-        return total_count, total_num_reads, total_q20_count, total_q30_count
+void *process_file(void *arg) {
+    Args *args = (Args *)arg;
+    gzFile file = gzopen(args->forward_read, "r");
+    if (!file) {
+        perror("gzopen");
+        pthread_exit(NULL);
+    }
 
-    def write_stats(output_file, sample_name, stats, write_mode='w'):
-        total_bases, total_reads, q20_bases, q30_bases = stats
-        total_num = sum(total_bases.values())
-        gc_content = (total_bases['G'] + total_bases['C']) * 100 / total_num if total_num > 0 else 0
-        n_content = (total_bases['N'] / total_num) if 'N' in total_bases and total_num > 0 else 0
-        with open(output_file, write_mode) as out:
-            out.write(f"{sample_name}\t{total_num}\t{total_reads}\t{gc_content:.2f}\t{n_content:.4f}\t{q20_bases * 100 / total_num:.2f}\t{q30_bases * 100 / total_num:.2f}\n")
-            out.write(f"SampleName : {sample_name}\n")
-            for base in 'ACTGN':
-                out.write(f"Total {base} : {total_bases[base]}\n")
-            out.write(f"Q30 Bases : {q30_bases}\nQ20 Bases : {q20_bases}\n")
-            out.write(f"Avg.ReadSize : {total_num/total_reads:.1f}\n")
+    Stats *stats = (Stats *)calloc(1, sizeof(Stats));
+    if (!stats) {
+        perror("calloc");
+        gzclose(file);
+        pthread_exit(NULL);
+    }
 
-    def run(self):
-        with multiprocessing.Pool(self.threads) as pool:
-            forward_stats = self.process_file(self.forward_read, pool)
-            if self.reverse_read:
-                total_counter = Counter()
-                reverse_stats = self.process_file(self.reverse_read, pool)
-                total_counter.update(forward_stats[0])
-                total_counter.update(reverse_stats[0])
-                total_num_reads = forward_stats[1] + reverse_stats[1]
-                total_q20_count = forward_stats[2] + reverse_stats[2]
-                total_q30_count = forward_stats[3] + reverse_stats[3]
-                total_stats = (total_counter, total_num_reads, total_q20_count, total_q30_count)
-                self.write_stats(self.output_file, self.sample_name, total_stats, write_mode='a')
-                self.write_stats(self.output_file, f"{self.sample_name}_1", forward_stats, write_mode='a')
-                self.write_stats(self.output_file, f"{self.sample_name}_2", reverse_stats, write_mode='a')
-            else:
-                self.write_stats(self.output_file, self.sample_name, forward_stats)
+    char *buffer = (char *)malloc(BLOCK_SIZE);
+    char *seq = NULL;
+    char *qual = NULL;
+    size_t seq_len = 0, qual_len = 0;
+    size_t line_len = 0;
+    char *line = NULL;
 
-def main():
-    parser = argparse.ArgumentParser(description="FASTQ Statistics Calculator with Multiprocessing")
-    parser.add_argument("-f", "--forward", required=True, help="Forward read (or single-end read)")
-    parser.add_argument("-r", "--reverse", help="Reverse read (for paired-end only)")
-    parser.add_argument("-s", "--sample_name", required=True, help="Sample name")
-    parser.add_argument("-o", "--output_file", default='output.sqs', help="Output file name")
-    parser.add_argument("-t", "--threads", default=8, type=int, help="Number of threads for multiprocessing")
-    parser.add_argument("--chunk_size", default=300000, type=int, help="Number of sequences per chunk")
-    parser.add_argument("--block_size", default=1024*1024*1024, type=int, help="Block size in bytes for reading the file")
+    while ((line_len = gzgets(file, buffer, BLOCK_SIZE)) != -1) {
+        // Sequence line
+        if (seq_len == 0) {
+            seq = strdup(buffer);
+            seq_len = line_len;
+            continue;
+        }
 
-    args = parser.parse_args()
-    
-    multiprocessing.set_start_method('spawn')
-    calculator = FASTQStatsCalculator(
-        args.forward,
-        args.reverse,
-        args.sample_name,
-        args.output_file,
-        args.threads,
-        args.chunk_size,
-        args.block_size
-    )
-    
-    calculator.run()
+        // Quality line
+        if (qual_len == 0) {
+            qual = strdup(buffer);
+            qual_len = line_len;
+            printf("%s", seq);  // Print sequence line
+            update_stats(stats, seq, qual);
+            free(seq);
+            free(qual);
+            seq_len = 0;
+            qual_len = 0;
+            continue;
+        }
+    }
 
-if __name__ == "__main__":
-    main()
-        
+    free(buffer);
+    gzclose(file);
+    pthread_exit(stats);
+}
+
+void write_stats(const char *output_file, const char *sample_name, Stats *stats) {
+    FILE *out = fopen(output_file, "a");
+    if (!out) {
+        perror("fopen");
+        return;
+    }
+
+    unsigned long long total_bases = 0;
+    for (int i = 0; i < 256; ++i) {
+        total_bases += stats->total_bases[i];
+    }
+
+    double gc_content = (double)(stats->total_bases['G'] + stats->total_bases['C']) * 100 / total_bases;
+    double n_content = stats->total_bases['N'] * 100 / total_bases;
+    double q20_percentage = stats->q20_bases * 100 / total_bases;
+    double q30_percentage = stats->q30_bases * 100 / total_bases;
+
+    fprintf(out, "%s\t%llu\t%llu\t%.2f\t%.4f\t%.2f\t%.2f\n", sample_name, total_bases, stats->total_reads, gc_content, n_content, q20_percentage, q30_percentage);
+    fprintf(out, "SampleName : %s\n", sample_name);
+    for (char base = 'A'; base <= 'Z'; ++base) {
+        fprintf(out, "Total %c : %llu\n", base, stats->total_bases[(unsigned char)base]);
+    }
+    fprintf(out, "Q30 Bases : %llu\nQ20 Bases : %llu\n", stats->q30_bases, stats->q20_bases);
+    fprintf(out, "Avg.ReadSize : %.1f\n", (double)total_bases / stats->total_reads);
+
+    fclose(out);
+}
+
+int main(int argc, char **argv) {
+    if (argc < 5) {
+        fprintf(stderr, "Usage: %s <forward_read> <reverse_read> <sample_name> <output_file> <threads>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    Args args;
+    args.forward_read = argv[1];
+    args.reverse_read = argv[2];
+    args.sample_name = argv[3];
+    args.output_file = argv[4];
+    args.threads = atoi(argv[5]);
+
+    pthread_t *threads = (pthread_t *)malloc(args.threads * sizeof(pthread_t));
+    Stats *all_stats = (Stats *)calloc(args.threads, sizeof(Stats));
+
+    for (int i = 0; i < args.threads; ++i) {
+        if (pthread_create(&threads[i], NULL, process_file, &args) != 0) {
+            perror("pthread_create");
+            return EXIT_FAILURE;
+        }
+    }
+
+    for (int i = 0; i < args.threads; ++i) {
+        Stats *thread_stats;
+        if (pthread_join(threads[i], (void **)&thread_stats) != 0) {
+            perror("pthread_join");
+            return EXIT_FAILURE;
+        }
+        for (int j = 0; j < 256; ++j) {
+            all_stats->total_bases[j] += thread_stats->total_bases[j];
+        }
+        all_stats->total_reads += thread_stats->total_reads;
+        all_stats->q20_bases += thread_stats->q20_bases;
+        all_stats->q30_bases += thread_stats->q30_bases;
+        free(thread_stats);
+    }
+
+    write_stats(args.output_file, args.sample_name, all_stats);
+
+    free(threads);
+    free(all_stats);
+
+    return EXIT_SUCCESS;
+}

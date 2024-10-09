@@ -1,5 +1,7 @@
 name: picard_env
 channels:
   - bioconda
+  - conda-forge
 dependencies:
+  - openjdk=17
   - picard

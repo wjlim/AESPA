@@ -1,0 +1,25 @@
+process BWAMEM2_MEM {
+    tag "$meta.id"
+    label 'process_medium'
+
+    conda NXF_OFFLINE == 'true' ?
+        "/mmfs1/lustre2/BI_Analysis/bi2/anaconda3/envs/bwamem2_mem":
+        "/mmfs1/lustre2/BI_Analysis/bi2/AESPA/modules/nf-core/bwamem2_mem/environment.yml"
+
+    input:
+    tuple val(meta), path(forward), path(reverse), path(index), path(fasta)
+
+    output:
+    tuple val(meta), path("${meta.id}.bam") , emit: ch_bam
+
+    script:
+    """
+    /mmfs1/lustre2/BI_Analysis/bi2/anaconda3/envs/bwamem2_mem/bin/bwa-mem2 \\
+        mem \\
+        -t ${task.cpus} \\
+        -R "@RG\tID:${meta.id}\tSM:${meta.sample}" \\
+        ${index}/genome.fa \\
+        ${forward} ${reverse} \\
+        | /mmfs1/lustre2/BI_Analysis/bi2/anaconda3/envs/bwamem2_mem/bin/samtools view -Sb > ${meta.id}.bam
+    """
+}

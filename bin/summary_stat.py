@@ -110,7 +110,7 @@ def main():
     avg_read_length = sqs_df['avg_read_size'][0] - 1
     genome_size = 2934 * 1000 * 1000
     throughput_mean_depth = total_bases/genome_size
-    dedup_rate = float(kmer_df['Deduplicated Rate'][0].replace('%','')) / 100
+    dedup_rate = ((float(kmer_df['Deduplicated Rate'][0].replace('%','')) - 16.47) * 1.25 ) / 100 # From regression analysis: y = 0.8x + 16.47
     dedupped_reads = int(total_reads * dedup_rate)
     sub_total_reads = flagstat_df['total_read'][1]
     sub_mapped_reads = flagstat_df['all_mappable_reads'][1]
@@ -135,25 +135,25 @@ def main():
     outfmt = \
 f'''Order no.\t{order_num}
 Sample ID\t{sample_id}
-Total reads\t{total_reads}
-Read length (bp)\t{avg_read_length}
+Total reads\t{total_reads:.0f}
+Read length (bp)\t{avg_read_length:.0f}
 Total yield (Mbp)\t{total_bases/(1000*1000):.0f}
-Reference size (Mbp)\t{genome_size/(1000*1000)}
+Reference size (Mbp)\t{genome_size/(1000*1000):.0f}
 Throughput mean depth (X)\t{throughput_mean_depth:.2f}
-De-duplicated reads\t{dedupped_reads:.2f}
-De-duplicated reads % (out of total reads)\t{dedup_rate * 100}
+De-duplicated reads\t{dedupped_reads/(1000*1000):.0f}
+De-duplicated reads % (out of total reads)\t{dedup_rate * 100:.2f}
 Mappable reads (reads mapped to human genome)\t{dedupped_mapped_reads:.0f}
-Mappable reads % (out of de-duplicated reads)\t{dedupped_mapping_rate*100:.2f}
-Mappable yield (Mbp)\t{mapped_yield}
-Mappable mean depth (X)\t{mapped_mean_depth}
-% >= 1X coverage\t{cov_1x}
-% >= 5X coverage\t{cov_5x}
-% >= 10X coverage\t{cov_10x}
-% >= 15X coverage\t{cov_15x}
-% >= 20X coverage\t{cov_20x}
-% >= 30X coverage\t{cov_30x}
-Fragment length median\t{insert_median_length}
-Standard deviation\t{insert_std}
+Mappable reads % (out of de-duplicated reads)\t{ sub_mapped_reads / sub_total_reads * 100:.2f}
+Mappable yield (Mbp)\t{mapped_yield/(1000*1000):.0f}
+Mappable mean depth (X)\t{mapped_mean_depth:.2f}
+% >= 1X coverage\t{cov_1x:.2f}
+% >= 5X coverage\t{cov_5x:.2f}
+% >= 10X coverage\t{cov_10x:.2f}
+% >= 15X coverage\t{cov_15x:.2f}
+% >= 20X coverage\t{cov_20x:.2f}
+% >= 30X coverage\t{cov_30x:.2f}
+Fragment length median\t{insert_median_length:.0f}
+Standard deviation\t{insert_std:.0f}
 SNPs\t{nSNPs}
 Small insertions\t{nINSs}
 Small deletions\t{nDELs}
@@ -175,14 +175,13 @@ Translocations\t{TRANS}
 het/hom ratio\t{hethom:.2f}
 Ts/Tv ratio\t{TsTv:.2f}
 DOC\t{DOC_check}
-Mode\t{mode}
-IQR\t{iqr}
-Distance\t{distance}
-ASN_Freemix\t{freemix}
-EUR_Freemix\t{freemix}
+Mode\t{mode:.2f}
+IQR\t{iqr:.1f}
+Distance\t{distance:.4f}
+ASN_Freemix\t{freemix:.4f}
+EUR_Freemix\t{freemix:.4f}
 Lib_Group\t{args.lib_group}
 '''
-
     if args.output:
         with open(args.output, 'w') as f:
             f.write(outfmt)

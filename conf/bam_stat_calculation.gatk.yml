@@ -1,0 +1,7 @@
+name: nf_gatk
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - java-1.8.0-openjdk-cos7-s390x
