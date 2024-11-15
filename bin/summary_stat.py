@@ -178,8 +178,8 @@ DOC\t{DOC_check}
 Mode\t{mode:.2f}
 IQR\t{iqr:.1f}
 Distance\t{distance:.4f}
-ASN_Freemix\t{freemix:.4f}
-EUR_Freemix\t{freemix:.4f}
+ASN_Freemix\t{freemix:.2e}
+EUR_Freemix\t{freemix:.2e}
 Lib_Group\t{args.lib_group}
 '''
     if args.output:

@@ -1,6 +1,6 @@
 process iSAAC_alignment {
     label "process_high"
-    tag "iSAAC_alignment for ${meta.id}"
+    tag "iSAAC_alignment for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     // publishDir "${params.outdir}/${meta.sample}/${params.prefix}", mode: 'copy'
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/iSAAC_align":
@@ -10,7 +10,7 @@ process iSAAC_alignment {
     tuple val(meta), path(preprocessed_dir), path(converted_sample_sheet), path(reference_fasta), path(reference_fai), path(reference_dict)
     
     output:
-    tuple val(meta), path("IsaacAlignment/Projects/${meta.order}/${meta.id}/sorted.bam"), path("IsaacAlignment/Projects/${meta.order}/${meta.id}/sorted.bam.bai"), emit: ch_bam
+    tuple val(meta), path("IsaacAlignment/Projects/${meta.order}/*/sorted.bam"), path("IsaacAlignment/Projects/${meta.order}/*/sorted.bam.bai"), emit: ch_bam
     
     script:
     def memoryValue = task.memory.toGiga()
@@ -18,8 +18,8 @@ process iSAAC_alignment {
     iSAAC_temp=\$(mktemp -d)
     isaac-align \\
     -r ${reference_fasta} \\
-    --memory-limit ${memoryValue} \\
-    -j ${task.cpus} \\
+    --memory-limit 192 \\
+    -j 32 \\
     --base-quality-cutoff 15 \\
     --keep-duplicates 1 \\
     --variable-read-length 1 \\

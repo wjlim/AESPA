@@ -32,8 +32,8 @@ workflow {
         .set { ch_bwamem2_index_path }
 
     INPUT_CHECK.out.ch_merged_samplesheet
-        .map {meta, fastq_1, fastq_2 -> 
-            [meta, fastq_1, fastq_2]
+        .map { tuple -> 
+            [tuple[0], tuple[1], tuple[2]]
         }
         .filter {meta, fastq_1, fastq_2 ->
             meta.app == 'Whole Genome Resequencing' &&
@@ -42,7 +42,7 @@ workflow {
             meta.service_group != 'CLIA'
         }
         .set { ch_samplesheet_mix }
-    AESPA(ch_samplesheet_mix, ch_ref_path, ch_bwamem2_index_path)
-    QC_CHECK(AESPA.out.ch_qc_report)
-    MAKE_DELIVERABLES(QC_CHECK.out.ch_api_response)
+    AESPA(ch_samplesheet_mix, ch_ref_path, ch_bwamem2_index_path, true)
+    // QC_CHECK(AESPA.out.ch_qc_report, ch_ref_path, ch_bwamem2_index_path)
+    // MAKE_DELIVERABLES(QC_CHECK.out.ch_confirmed)
 }

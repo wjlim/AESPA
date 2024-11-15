@@ -1,6 +1,6 @@
 process sqs_merge {
     label "process_single"
-    tag "SQS merge for ${meta.id}"
+    tag "SQS merge for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/RapidQC_preprocessing":
         "${baseDir}/conf/preprocessing.yml"

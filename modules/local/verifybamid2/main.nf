@@ -1,6 +1,6 @@
 process calc_freemix_values {
     label "process_low"
-    tag "calc freemix for ${meta.id}"
+    tag "calc freemix for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     conda NXF_OFFLINE == 'true' ?
         "/mmfs1/lustre2/BI_Analysis/wjlim/anaconda3/envs/calc_bam_stat":
         "${baseDir}/conf/bam_stat_calculation.yml"
@@ -29,10 +29,10 @@ process calc_freemix_values {
     --NumPC 4 \
     --Epsilon 1e-11
 
-    if [ \$? -ne 0 ];then
-        echo -e "#SEQ_ID\\tRG\\tCHIP_ID\\t#SNPS\\t#READS\\tAVG_DP\\tFREEMIX\\tFREELK1\\tFREELK0\\tFREE_RH\\tFREE_RA\\tCHIPMIX\\tCHIPLK1\\tCHIPLK0\\tCHIP_RH\\tCHIP_RA\\tDPREF\\tRDPHET\\tRDPALT" > ${meta.id}.freemix.vb2.selfSM
-        echo -e "${meta.id}\\tNA\\tNA\\t100000\\tNA\\tNA\\t0.0\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA" >> ${meta.id}.freemix.vb2.selfSM
-    fi
+    #if [ \$? -ne 0 ];then
+    #    echo -e "#SEQ_ID\\tRG\\tCHIP_ID\\t#SNPS\\t#READS\\tAVG_DP\\tFREEMIX\\tFREELK1\\tFREELK0\\tFREE_RH\\tFREE_RA\\tCHIPMIX\\tCHIPLK1\\tCHIPLK0\\tCHIP_RH\\tCHIP_RA\\tDPREF\\tRDPHET\\tRDPALT" > ${meta.id}.freemix.vb2.selfSM
+    #    echo -e "${meta.id}\\tNA\\tNA\\t100000\\tNA\\tNA\\t0.0\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA" >> ${meta.id}.freemix.vb2.selfSM
+    #fi
     set -e
     """
 }

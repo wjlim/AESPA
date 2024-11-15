@@ -1,7 +1,6 @@
 process variant_call {
     label "process_medium"
-    tag "strelka variant call for ${meta.id}"
-    publishDir "${params.outdir}/${meta.sample}/${params.prefix}", mode: 'copy'
+    tag "strelka variant call for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/variant_call":
         "${baseDir}/conf/strelka_variant_call.yml"
@@ -10,7 +9,7 @@ process variant_call {
     tuple val(meta), path(out_bam), path(out_bai), path(ref), path(ref_fai), path(ref_dict)
 
     output:
-    tuple val(meta),  path( "VCF/results/variants/variants.vcf.gz"), emit: raw_vcf_file
+    tuple val(meta),  path( "*.vcf.gz*"), emit: raw_vcf_file
 
     script:
     """
@@ -28,5 +27,8 @@ process variant_call {
         -m local \\
         -j ${task.cpus} \\
         --quiet
+    wait
+    mv VCF/results/variants/*.vcf.gz* .
+    wait
     """
 }

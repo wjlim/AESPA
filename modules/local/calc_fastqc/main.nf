@@ -3,7 +3,7 @@ process calc_fastqc {
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/RapidQC_preprocessing":
         "${baseDir}/conf/preprocessing.yml"
-    tag "FastQC analysis for ${meta.id}"
+    tag "FastQC analysis for ${meta.sample}.${meta.fc_id}.${meta.lane}"
 
     input:
     tuple val(meta), path(forward_read), path(reverse_read)

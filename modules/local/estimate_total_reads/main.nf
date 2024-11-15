@@ -1,6 +1,6 @@
 process estimate_total_read {
     label "process_single"
-    tag "Estimating number of total reads for subsampling"
+    tag "Estimating number of total reads to subsample for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
 
     input:
     tuple val(meta), path(forward_read), path(reverse_read)

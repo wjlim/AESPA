@@ -1,7 +1,6 @@
 process summary_qc {
     label "process_single"
-    tag "generate result summary qc file for ${meta.id}"
-    publishDir "${params.outdir}/${meta.sample}/${params.prefix}", mode: 'copy'
+    tag "generate result summary qc file for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/RapidQC_preprocessing":
         "${baseDir}/conf/preprocessing.yml"
@@ -15,10 +14,10 @@ process summary_qc {
           path(picard_insertsize), 
           path(GATK_DOC), 
           path(freemix_out), 
-          path(doc_distance_out_file)
-
+          path(doc_distance_out_file),
+          path(sex_file)
     output:
-    tuple val(meta), path("${meta.id}.QC.summary"), emit: qc_report
+    tuple val(meta), path("*.QC.summary"), emit: qc_report
 
     script:
     """
@@ -110,21 +109,28 @@ process summary_qc {
         freemix_df = pd.read_table("${freemix_out}", header=0)
         nSNPs, nINSs, nDELs = process_vcf("${out_vcf}")
         DOC_check, mode, iqr, distance = check_DOC_conditions("${doc_distance_out_file}")
+        sex_df = pd.read_csv("${sex_file}", header = 0)
 
-        order_num = "${meta.order_num}"
+        order_num = "${meta.order}"
         sample_id = "${meta.id}"
         total_bases = sqs_df['total_bases'][0]
         total_reads = sqs_df['total_num_of_reads'][0]
         avg_read_length = sqs_df['avg_read_size'][0] - 1
         genome_size = 2934 * 1000 * 1000
         throughput_mean_depth = total_bases/genome_size
-        dedup_rate = ((float(kmer_df['Deduplicated Rate'][0].replace('%','')) - 16.47) * 1.25 ) / 100
-        dedupped_reads = int(total_reads * dedup_rate)
+        if "${meta.subsampling}" == "false":
+            duplicates = int(flagstat_df['all_duplicates'][1])
+            dedupped_reads = total_reads - duplicates
+            dedup_rate = dedupped_reads / float(total_reads)
+        else:
+            dedup_rate = ((float(kmer_df['Deduplicated Rate'][0].replace('%','')) - 16.47) * 1.25 ) / 100
+            dedupped_reads = int(total_reads * dedup_rate)
+
         sub_total_reads = flagstat_df['total_read'][1]
         sub_mapped_reads = flagstat_df['all_mappable_reads'][1]
-        sub_dedupped_mapped_reads = flagstat_df['mappable_reads'][1]
+        sub_duplicates = int(flagstat_df['all_duplicates'][1])
         mapping_rate = sub_mapped_reads / sub_total_reads
-        dedupped_mapping_rate = sub_dedupped_mapped_reads / sub_total_reads
+        dedupped_mapping_rate = sub_mapped_reads / (sub_total_reads - sub_duplicates)
         dedupped_mapped_reads = dedupped_reads * mapping_rate
         mapped_yield = int(dedupped_reads * avg_read_length * dedupped_mapping_rate)
         mapped_mean_depth = mapped_yield / genome_size
@@ -138,7 +144,7 @@ process summary_qc {
         insert_std = picard_is_df['MEDIAN_ABSOLUTE_DEVIATION'][0]
         syn_mut = non_sym_mut = splicing = stop_gain = stop_los = fram_shift = dbSNP138 = dbSNP154 = CNV_gain = CNV_loss = DUP = INS = DEL = INV = TRANS = hethom = TsTv = 0
         freemix = freemix_df['FREEMIX'][0]
-
+        sex = sex_df['sex'][0]
         outfmt = f'''Order no.\t{order_num}
     Sample ID\t{sample_id}
     Total reads\t{total_reads:.0f}
@@ -149,7 +155,7 @@ process summary_qc {
     De-duplicated reads\t{dedupped_reads/(1000*1000):.0f}
     De-duplicated reads % (out of total reads)\t{dedup_rate * 100:.2f}
     Mappable reads (reads mapped to human genome)\t{dedupped_mapped_reads:.0f}
-    Mappable reads % (out of de-duplicated reads)\t{sub_mapped_reads / sub_total_reads * 100:.2f}
+    Mappable reads % (out of de-duplicated reads)\t{dedupped_mapping_rate * 100:.2f}
     Mappable yield (Mbp)\t{mapped_yield/(1000*1000):.0f}
     Mappable mean depth (X)\t{mapped_mean_depth:.2f}
     % >= 1X coverage\t{cov_1x:.2f}
@@ -184,12 +190,13 @@ process summary_qc {
     Mode\t{mode:.2f}
     IQR\t{iqr:.1f}
     Distance\t{distance:.4f}
-    ASN_Freemix\t{freemix:.4f}
-    EUR_Freemix\t{freemix:.4f}
+    ASN_Freemix\t{freemix:.4e}
+    EUR_Freemix\t{freemix:.4e}
     Lib_Group\t${meta.lib_group}
+    Sex\t{sex}
     '''
 
-        with open("${meta.id}.QC.summary", 'w') as f:
+        with open("${meta.order}.${meta.sample}.${meta.fc_id}.${meta.lane}.QC.summary", 'w') as f:
             f.write(outfmt)
 
     if __name__ == '__main__':

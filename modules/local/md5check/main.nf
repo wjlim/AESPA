@@ -1,7 +1,7 @@
 process md5check_sum {
     label "process_local"
 
-    tag "MD5 check for ${meta.id}"
+    tag "MD5 check for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
 
     input:
     tuple val(meta), path(forward_read), path(reverse_read)

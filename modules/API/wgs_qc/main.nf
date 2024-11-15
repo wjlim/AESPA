@@ -1,19 +1,21 @@
 process LIMS_QC_API_CALL {
-    tag "${meta.id}"
-    publishDir "${params.outdir}/${meta.sample}/${params.prefix}", mode: 'copy'
+    label "proces_single"
+    tag "Making LIMS API input for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     
     input:
     tuple val(meta), path(qc_summary)
-    
+    val subsampling
     output:
-    tuple val(meta), path("${meta.id}_input.json"), emit: json_file
+    tuple val(meta), path("${meta.id}_input.json"), emit: ch_json_file
     
     script:
-
     """
     #!/usr/bin/env python3
     import json
-    
+    if "${meta.subsampling}" == "false" or ${subsampling} == 'false':
+        qc_method = "TOTAL"
+    else:
+        qc_method = "AESPA"
     # Read QC summary file
     with open("${qc_summary}", 'r') as f:
         qc_data = dict(line.strip().split('\\t') for line in f)
@@ -65,7 +67,8 @@ process LIMS_QC_API_CALL {
         "xxDistance": qc_data["Distance"],
         "xxFreemixAsn": qc_data["ASN_Freemix"],
         "xxFreemixEur": qc_data["EUR_Freemix"],
-        "qc_method":"AESPA"
+        "qcMethod":qc_method,
+        "xxSex":qc_data["Sex"]
     }
     with open("${meta.id}_input.json", 'w') as f:
         json.dump([payload], f, indent = 4)

@@ -1,6 +1,6 @@
 process sqs_calc {
     label "process_low"
-    tag "SQS calculation for ${meta.id}"
+    tag "SQS calculation for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
 
     input:
     tuple val(meta), path(forward), path(reverse)

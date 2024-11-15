@@ -1,5 +1,5 @@
 process BWAMEM2_MEM {
-    tag "$meta.id"
+    tag "BWAMEM2 aligning for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     label 'process_medium'
 
     conda NXF_OFFLINE == 'true' ?
@@ -20,9 +20,10 @@ process BWAMEM2_MEM {
     bwa-mem2 \\
         mem \\
         -t ${task.cpus} \\
-        -R "@RG\tID:${meta.id}\tSM:${meta.sample}" \\
+        -K 1000000 \\
+        -R "@RG\tID:${meta.id}\tSM:${meta.id}" \\
         ${index}/genome.fa \\
         ${forward} ${reverse} \\
-        | samtools view -Sb > ${meta.id}.bam
+        | grep -v ^"@PG"|/mmfs1/lustre2/BI_Analysis/bi2/anaconda3/envs/bwamem2_mem/bin/samtools sort -@ ${task.cpus} > ${meta.id}.bam
     """
 }

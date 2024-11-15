@@ -6,12 +6,15 @@ def parse_flag(read):
     is_supplementary = read.is_supplementary
     is_unmapped = read.is_unmapped
     is_duplicate = read.is_duplicate
-    return is_supplementary, is_unmapped, is_duplicate
+    is_proper_pair = read.is_proper_pair
+    return is_supplementary, is_unmapped, is_duplicate, is_proper_pair
+
 
 def process_bam_file(filename):
     counts = {
         "total_reads": 0,
         "all_mapped_reads": 0,
+        "properly_paired_reads": 0,
         "mapRead_in_duplicates": 0,
         "duplicates": 0,
         "all_supple_reads": 0
@@ -19,12 +22,14 @@ def process_bam_file(filename):
 
     with pysam.AlignmentFile(filename, "rb") as bamfile:
         for read in bamfile:
-            is_supplementary, is_unmapped, is_duplicate = parse_flag(read)
+            is_supplementary, is_unmapped, is_duplicate, is_proper_pair = parse_flag(read)
 
             if not is_supplementary:
                 counts["total_reads"] += 1
                 if not is_unmapped:
                     counts["all_mapped_reads"] += 1
+                    if is_proper_pair:
+                        counts["properly_paired_reads"] += 1
                     if is_duplicate:
                         counts["mapRead_in_duplicates"] += 1
                 if is_duplicate:

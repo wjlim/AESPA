@@ -1,6 +1,6 @@
 process calc_PE_insert_size {
     label "process_low"
-    tag "Picard insertsize calculation for ${meta.id}"
+    tag "Picard insertsize calculation for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/picard_env":
         "${baseDir}/conf/bam_stat_calculation.picard.yml"

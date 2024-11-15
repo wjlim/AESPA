@@ -23,7 +23,7 @@ workflow calc_bams {
     calc_freemix_values(ch_bam_combined)
     calc_genome_coverage(bam_ch)
     calc_DOC(ch_bam_combined)
-    calc_distance(bam_ch, calc_genome_coverage.out)
+    calc_distance(bam_ch, calc_genome_coverage.out.ch_genomecov)
     calc_PE_insert_size(bam_ch)
     calc_samtools_flagstat(bam_ch)
     variant_call(ch_bam_combined)
@@ -36,4 +36,5 @@ workflow calc_bams {
     freemix_out_file = calc_freemix_values.out.vb2_out
     doc_distance_out_file = calc_distance.out
     ch_filtered_vcf = pass_filter.out.filtered_vcf
+    ch_sex = calc_genome_coverage.out.ch_sex
 }

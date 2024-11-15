@@ -1,6 +1,6 @@
 process calc_dedup_rates {
     label "process_small"
-    tag "calculating calc_dedup_rates for ${meta.id}"
+    tag "calculating calc_dedup_rates for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/RapidQC_preprocessing":
         "${baseDir}/conf/preprocessing.yml"

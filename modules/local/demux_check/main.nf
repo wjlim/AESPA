@@ -1,6 +1,6 @@
 process DEMUX_CHECK {
     label "process_single"
-    tag "Demux check and merging raw data for ${meta.sample}"
+    tag "Demux check and merging raw data for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     publishDir "${wgs_dest_path}/${meta.sample}/merged_analysis", mode:'copy', overwrite: true
 
     input:

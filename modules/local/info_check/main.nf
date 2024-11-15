@@ -76,6 +76,8 @@ process info_check {
         print(f"Error loading ${sample_sheet}: {e}")
         exit(1)
     merged_df = pd.merge(samplesheet_df.astype(str), order_info_df.astype(str), on='SampleID', how='left')
+    if merged_df.shape[0] == 0:
+        raise ValueError("No matching records found after merging sample sheet and order info")
     merged_df.to_csv('sample_sheet.valid.merged.csv', index = False)
     """
 }

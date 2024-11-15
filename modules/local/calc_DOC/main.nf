@@ -1,6 +1,6 @@
 process calc_DOC {
     label "process_low"
-    tag "depth of coverage for ${meta.id}"
+    tag "depth of coverage for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/nf_gatk":
         "${baseDir}/conf/bam_stat_calculation.gatk.yml"

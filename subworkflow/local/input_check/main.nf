@@ -41,7 +41,9 @@ workflow INPUT_CHECK {
                 lib_kit:row['Library Kit'],
                 lib_protocol:row['Library Protocol'],
                 service_group:row['Service Group'],
-                pl_id:row['pl Id']
+                pl_id:row['pl Id'],
+                fastq_1:row.fastq_1,
+                fastq_2:row.fastq_2
             ]
             [meta, row.fastq_1, row.fastq_2]
         }

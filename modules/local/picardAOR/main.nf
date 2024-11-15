@@ -1,5 +1,5 @@
 process picard_add_or_replace_read_group {
-    tag "${meta.id}"
+    tag "${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     label "process_small"
     
     input:

@@ -1,7 +1,6 @@
 process pass_filter {
     label "process_single"
-    tag "pass filter for ${meta.id}"
-    publishDir "${params.outdir}/${meta.sample}/${params.prefix}", mode: 'copy'
+    tag "pass filter for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     conda NXF_OFFLINE == 'true' ?
         "/mmfs1/lustre2/BI_Analysis/wjlim/anaconda3/envs/variant_call":
         "${baseDir}/conf/strelka_variant_call.yml"

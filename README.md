@@ -2,10 +2,7 @@
 
 ## Overview
 This pipeline is designed to perform quality control (QC) for whole genome sequencing (WGS) data by conducting 3x subsampling. 
-![flowchart](Figure/flow_chart.png)
 The entire workflow is modularized using Nextflow.
-
-
 
 ## 🌟 Features
 Efficient QC Processing: Subsampling and QC for WGS data.
@@ -17,11 +14,57 @@ Nextflow: Version 23.10.1 or higher
 Sun Grid Engine: For job scheduling
 Conda: For managing software dependencies
 
+## 📂 Directory Structure
+
+```arduino
+wgs_qc
+├── apps
+│   └── GenomeAnalysisTK-3.7
+├── bin
+│   ├── batch.sh
+│   ├── DOC_distance.py
+│   ├── extract_variants
+│   ├── samtools_flagstat.py
+│   ├── sqs_generate.py
+│   ├── stat_summary.py
+│   ├── subsampler.sh
+│   └── summary_stat.py
+├── conf
+│   ├── reference.json
+│   ├── sge_conda.config
+│   └── sge_local.config
+├── input.json
+├── main.nf
+├── nextflow.config
+├── run.nf_test.sh
+├── src
+│   ├── genome.dict
+│   ├── genome.fa
+│   ├── genome.fa.fai
+│   └── sorted-reference.xml
+└── workflow
+    ├── bam_stat_calculation.nf
+    ├── bam_stat_calculation.picard.yml
+    ├── bam_stat_calculation.yml
+    ├── iSAAC_pipeline.nf
+    ├── iSAAC_pipeline.yml
+    ├── preprocessing.nf
+    ├── preprocessing.yml
+    ├── strelka_variant_call.nf
+    ├── strelka_variant_call.yml
+    ├── summary_qc_stat.nf
+    └── summary_qc_stat.yml
+```
+
 ## 🛠 Installation
 
 ```sh
 conda install git
-find ./ -name '*.yml' -exec conda env create -f {} \;
+conda env create -f workflow/preprocessing.yml
+conda env create -f workflow/iSAAC_pipeline.yml
+conda env create -f workflow/bam_stat_calculation.yml
+conda env create -f workflow/strelka_variant_call.yml
+conda env create -f workflow/summary_qc_stat.yml
 ```
 
 ## 🚀 Usage
