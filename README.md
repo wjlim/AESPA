@@ -122,6 +122,8 @@ nextflow run ${src_dir}/main.nf \
 ```
 
 ## 🧬 Workflow Details
+![Pipeline Workflow](Figure/flow_chart.png)
+
 Submodules
 Preprocessing (preprocessing.nf)
 iSAAC Alignment (iSAAC_pipeline.nf)
