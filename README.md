@@ -16,55 +16,58 @@ Conda: For managing software dependencies
 
 ## 📂 Directory Structure
 
-```arduino
-wgs_qc
+```
+AESPA
 ├── apps
 │   └── GenomeAnalysisTK-3.7
 ├── bin
-│   ├── batch.sh
-│   ├── DOC_distance.py
-│   ├── extract_variants
-│   ├── samtools_flagstat.py
+│   ├── sqs_calc
 │   ├── sqs_generate.py
-│   ├── stat_summary.py
-│   ├── subsampler.sh
-│   └── summary_stat.py
+│   ├── sqs_merge.py
+│   └── stat_summary.py
 ├── conf
+│   ├── bam_stat_calculation.gatk.yml
+│   ├── bam_stat_calculation.picard.yml
+│   ├── bam_stat_calculation.yml
+│   ├── base.config
+│   ├── iSAAC_pipeline.yml
+│   ├── LIMS_API.config
+│   ├── modules.config
+│   ├── preprocessing.yml
 │   ├── reference.json
 │   ├── sge_conda.config
-│   └── sge_local.config
-├── input.json
-├── main.nf
-├── nextflow.config
-├── run.nf_test.sh
-├── src
-│   ├── genome.dict
-│   ├── genome.fa
-│   ├── genome.fa.fai
-│   └── sorted-reference.xml
+│   ├── sge_local.config
+│   ├── sge_local_season2.config
+│   ├── strelka_variant_call.yml
+│   ├── summary_qc_stat.yml
+│   └── test.config
+├── Figure
+│   └── flow_chart.png
+├── modules
+│   ├── API
+│   ├── local
+│   └── nf-core
+├── subworkflow
+│   └── local
+│       ├── bam_stat_calculation/
+│       ├── bwa_pipeline/
+│       ├── demux_check/
+│       ├── input_check/
+│       ├── iSAAC_pipeline/
+│       ├── make_deliverables/
+│       ├── preprocessing/
+│       ├── QC_CHECK/
+│       ├── report_prepare/
+│       └── strelka_variant_call/
 └── workflow
-    ├── bam_stat_calculation.nf
-    ├── bam_stat_calculation.picard.yml
-    ├── bam_stat_calculation.yml
-    ├── iSAAC_pipeline.nf
-    ├── iSAAC_pipeline.yml
-    ├── preprocessing.nf
-    ├── preprocessing.yml
-    ├── strelka_variant_call.nf
-    ├── strelka_variant_call.yml
-    ├── summary_qc_stat.nf
-    └── summary_qc_stat.yml
+    └── aespa.nf
 ```
 
 ## 🛠 Installation
 
 ```sh
 conda install git
-conda env create -f workflow/preprocessing.yml
-conda env create -f workflow/iSAAC_pipeline.yml
-conda env create -f workflow/bam_stat_calculation.yml
-conda env create -f workflow/strelka_variant_call.yml
-conda env create -f workflow/summary_qc_stat.yml
+conda env create -f $(find . -name '*.yml')
 ```
 
 ## 🚀 Usage
