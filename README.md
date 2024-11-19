@@ -17,57 +17,54 @@ Conda: For managing software dependencies
 ## 📂 Directory Structure
 
 ```
-AESPA
+wgs_qc
 ├── apps
 │   └── GenomeAnalysisTK-3.7
 ├── bin
-│   ├── sqs_calc
+│   ├── batch.sh
+│   ├── DOC_distance.py
+│   ├── extract_variants
+│   ├── samtools_flagstat.py
 │   ├── sqs_generate.py
-│   ├── sqs_merge.py
-│   └── stat_summary.py
+│   ├── stat_summary.py
+│   ├── subsampler.sh
+│   └── summary_stat.py
 ├── conf
-│   ├── bam_stat_calculation.gatk.yml
-│   ├── bam_stat_calculation.picard.yml
-│   ├── bam_stat_calculation.yml
-│   ├── base.config
-│   ├── iSAAC_pipeline.yml
-│   ├── LIMS_API.config
-│   ├── modules.config
-│   ├── preprocessing.yml
 │   ├── reference.json
 │   ├── sge_conda.config
-│   ├── sge_local.config
-│   ├── sge_local_season2.config
-│   ├── strelka_variant_call.yml
-│   ├── summary_qc_stat.yml
-│   └── test.config
-├── Figure
-│   └── flow_chart.png
-├── modules
-│   ├── API
-│   ├── local
-│   └── nf-core
-├── subworkflow
-│   └── local
-│       ├── bam_stat_calculation/
-│       ├── bwa_pipeline/
-│       ├── demux_check/
-│       ├── input_check/
-│       ├── iSAAC_pipeline/
-│       ├── make_deliverables/
-│       ├── preprocessing/
-│       ├── QC_CHECK/
-│       ├── report_prepare/
-│       └── strelka_variant_call/
+│   └── sge_local.config
+├── input.json
+├── main.nf
+├── nextflow.config
+├── run.nf_test.sh
+├── src
+│   ├── genome.dict
+│   ├── genome.fa
+│   ├── genome.fa.fai
+│   └── sorted-reference.xml
 └── workflow
-    └── aespa.nf
+    ├── bam_stat_calculation.nf
+    ├── bam_stat_calculation.picard.yml
+    ├── bam_stat_calculation.yml
+    ├── iSAAC_pipeline.nf
+    ├── iSAAC_pipeline.yml
+    ├── preprocessing.nf
+    ├── preprocessing.yml
+    ├── strelka_variant_call.nf
+    ├── strelka_variant_call.yml
+    ├── summary_qc_stat.nf
+    └── summary_qc_stat.yml
 ```
 
 ## 🛠 Installation
 
 ```sh
 conda install git
-conda env create -f $(find . -name '*.yml')
+conda env create -f workflow/preprocessing.yml
+conda env create -f workflow/iSAAC_pipeline.yml
+conda env create -f workflow/bam_stat_calculation.yml
+conda env create -f workflow/strelka_variant_call.yml
+conda env create -f workflow/summary_qc_stat.yml
 ```
 
 ## 🚀 Usage
@@ -81,6 +78,45 @@ To run the pipeline with local environments:
 ```sh
 nextflow run main.nf -profile sge_local_env --json_file input.json
 ```
+
+### Pipeline Options
+#### Merge Step
+- Use `--merge_flag` to control whether to run only the merge step
+- Default: false (runs full pipeline)
+```sh
+# Run only merge step
+nextflow run main.nf -profile sge --merge_flag true
+
+# Run full pipeline
+nextflow run main.nf -profile sge --merge_flag false
+```
+
+#### LIMS Integration
+- Use `--lims_qc` to enable/disable LIMS QC reporting
+- Default: true (enables LIMS QC reporting)
+```sh
+# Enable LIMS QC reporting
+nextflow run main.nf -profile sge --lims_qc true
+
+# Disable LIMS QC reporting
+nextflow run main.nf -profile sge --lims_qc false
+```
+
+### Configuration Parameters
+Key pipeline parameters can be configured in `nextflow.config`:
+```groovy
+params {
+    merge_flag = false    // Set to true to only run merge step
+    lims_qc = true       // Set to false to disable LIMS QC reporting
+    target_x = 5         // Target coverage depth for subsampled reads
+    
+    // QC thresholds
+    freemix_limit = 0.05          // Upper limit of freemix value
+    mapping_rate_limit = 88       // Lower limit of mapping rate (%)
+    deduplicate_rate_limit = 78   // Lower limit of deduplicate rate (%)
+}
+```
+
 ### Running the pipeline with Wrapper
 ```
 call_AESPA_pipeline.sh -s sample_sheet.csv -f forward_read -r reverse_read -o output_dir
@@ -125,8 +161,6 @@ nextflow run ${src_dir}/main.nf \
 ```
 
 ## 🧬 Workflow Details
-![Pipeline Workflow](Figure/flow_chart.png)
-
 Submodules
 Preprocessing (preprocessing.nf)
 iSAAC Alignment (iSAAC_pipeline.nf)

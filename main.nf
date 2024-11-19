@@ -5,6 +5,7 @@ include { FIND_RAW_DATA        } from "${baseDir}/modules/local/find_raw_data"
 include { INPUT_CHECK          } from "${baseDir}/subworkflow/local/input_check"
 include { QC_CHECK             } from "${baseDir}/subworkflow/local/QC_CHECK"
 include { MAKE_DELIVERABLES    } from "${baseDir}/subworkflow/local/make_deliverables"
+include { QC_CONFIRM           } from "${baseDir}/modules/local/QC_CONFIRM"
 
 workflow {
     main:
@@ -42,7 +43,38 @@ workflow {
             meta.service_group != 'CLIA'
         }
         .set { ch_samplesheet_mix }
-    AESPA(ch_samplesheet_mix, ch_ref_path, ch_bwamem2_index_path, true)
-    // QC_CHECK(AESPA.out.ch_qc_report, ch_ref_path, ch_bwamem2_index_path)
-    // MAKE_DELIVERABLES(QC_CHECK.out.ch_confirmed)
+    def mergeFlag = params.merge_flag.toString().toLowerCase().toBoolean()
+    if (!mergeFlag) {
+        AESPA(ch_samplesheet_mix, ch_ref_path, ch_bwamem2_index_path, true)
+        QC_CHECK(AESPA.out.ch_qc_report, ch_ref_path, ch_bwamem2_index_path)
+        MAKE_DELIVERABLES(QC_CHECK.out.ch_confirmed)
+    } 
+    else {
+        ch_samplesheet_mix
+            .map {meta, fastq_1, fastq_2 ->
+                return [meta, fastq_1]
+            }.set { ch_samplesheet_mix_single }
+        QC_CONFIRM(ch_samplesheet_mix_single)
+        MAKE_DELIVERABLES(QC_CONFIRM.out.ch_confirmed)
+    }
 }
+
+workflow.onComplete {
+    println "Pipeline completed at: $workflow.complete"
+    println "Execution status: ${ workflow.success ? 'OK' : 'failed' }"
+}
+
+// workflow.onError {
+//     def subject = "Pipeline execution failed!"
+//     def msg = """
+//         Pipeline execution failed!
+//         ---------------------------
+//         Error message: ${workflow.errorMessage}
+//         Completed at: ${workflow.complete}
+//         Duration    : ${workflow.duration}
+//         workDir     : ${workflow.workDir}
+//         exit status : ${workflow.exitStatus}
+//         """
+    
+//     ['mail', '-s', subject, params.email].execute() << msg
+// }
