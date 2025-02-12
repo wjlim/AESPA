@@ -58,54 +58,78 @@ process summary_qc {
             for line in file:
                 if line.startswith('#'):
                     continue
-                
-                columns = line.strip().split('\t')
-                ref = columns[3]
-                alt = columns[4].split(',')
-                
-                for allele in alt:
-                    if len(ref) == 1 and len(allele) == 1:
-                        nSNPs += 1
-                    elif len(ref) < len(allele):
-                        nINSs += 1
-                    elif len(ref) > len(allele):
-                        nDELs += 1
+                try:
+                    columns = line.strip().split('\t')
+                    ref = columns[3]
+                    alt = columns[4].split(',')
+                    
+                    for allele in alt:
+                        if len(ref) == 1 and len(allele) == 1:
+                            nSNPs += 1
+                        elif len(ref) < len(allele):
+                            nINSs += 1
+                        elif len(ref) > len(allele):
+                            nDELs += 1
+                except Exception as e:
+                    print(f"Error processing line: {line.strip()}")
         return nSNPs, nINSs, nDELs
 
     def check_DOC_conditions(doc_file):
         check = 0
         mode = iqr = distance = None
-
-        with open(doc_file, 'r') as file:
-            for line in file:
-                parts = line.strip().split('\t')
-                if len(parts) < 2:
-                    continue
-                key, value = parts[0], parts[1]
-                if key == "Mode":
-                    mode = float(value)
-                    if -0.3 <= mode <= 0.1:
-                        check += 1
-                elif key == "IQR 75%-25%":
-                    iqr = float(value)
-                    if iqr <= 1.0:
-                        check += 1
-                elif key == "Distance":
-                    distance = float(value)
-                    if distance <= 1.0:
-                        check += 1
-            if check == 3:
-                DOC = 'PASS'
-            else:
-                DOC = 'FAIL'
+        try:
+            with open(doc_file, 'r') as file:
+                for line in file:
+                    parts = line.strip().split('\t')
+                    if len(parts) < 2:
+                        continue
+                    key, value = parts[0], parts[1]
+                    if key == "Mode":
+                        mode = float(value)
+                        if -0.3 <= mode <= 0.1:
+                            check += 1
+                    elif key == "IQR 75%-25%":
+                        iqr = float(value)
+                        if iqr <= 1.0:
+                            check += 1
+                    elif key == "Distance":
+                        distance = float(value)
+                        if distance <= 1.0:
+                            check += 1
+                if check == 3:
+                    DOC = 'PASS'
+                else:
+                    DOC = 'FAIL'
+        except:
+            DOC = 'FAIL'
         return DOC, mode, iqr, distance
 
     def main():
         sqs_df = sqs_parser("${sqs_file}")
         kmer_df = pd.read_csv("${kmer_out}")
         flagstat_df = pd.read_table("${flagstat_out}", header=None, index_col=0).T
-        picard_is_df = pd.read_table("${picard_insertsize}", skip_blank_lines=True, comment='#', header=0, nrows=1)
-        GATK_DOC_df = pd.read_table("${GATK_DOC}", header=0, nrows=1)
+        try:
+            picard_is_df = pd.read_table("${picard_insertsize}", skip_blank_lines=True, comment='#', header=0, nrows=1)
+            insert_median_length = picard_is_df['MEDIAN_INSERT_SIZE'][0]
+            insert_std = picard_is_df['MEDIAN_ABSOLUTE_DEVIATION'][0]
+        except:
+            insert_median_length = 0
+            insert_std = 0
+        try:
+            GATK_DOC_df = pd.read_table("${GATK_DOC}", header=0, nrows=1)
+            cov_1x = GATK_DOC_df['%_bases_above_1'][0]
+            cov_5x = GATK_DOC_df['%_bases_above_5'][0]
+            cov_10x = GATK_DOC_df['%_bases_above_10'][0]
+            cov_15x = GATK_DOC_df['%_bases_above_15'][0]
+            cov_20x = GATK_DOC_df['%_bases_above_20'][0]
+            cov_30x = GATK_DOC_df['%_bases_above_30'][0]
+        except:
+            cov_1x = 0
+            cov_5x = 0
+            cov_10x = 0
+            cov_15x = 0
+            cov_20x = 0
+            cov_30x = 0
         freemix_df = pd.read_table("${freemix_out}", header=0)
         nSNPs, nINSs, nDELs = process_vcf("${out_vcf}")
         DOC_check, mode, iqr, distance = check_DOC_conditions("${doc_distance_out_file}")
@@ -127,7 +151,7 @@ process summary_qc {
             dedupped_reads = int(total_reads * dedup_rate)
 
         sub_total_reads = flagstat_df['total_read'][1]
-        sub_mapped_reads = flagstat_df['all_mappable_reads'][1]
+        sub_mapped_reads = flagstat_df['mappable_reads'][1]
         sub_duplicates = int(flagstat_df['all_duplicates'][1])
         mapping_rate = sub_mapped_reads / sub_total_reads
         dedupped_mapping_rate = sub_mapped_reads / (sub_total_reads - sub_duplicates)

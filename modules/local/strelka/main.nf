@@ -13,6 +13,7 @@ process variant_call {
 
     script:
     """
+    set -e 
     echo -e "[StrelkaGermline]\nmaxIndelSize = 49\nminMapq = 20\nisWriteRealignedBam = 0\nextraVariantCallerArguments =" \
     > configureStrelkaGermlineWorkflow.py.ini
     
@@ -21,6 +22,7 @@ process variant_call {
         --bam=${out_bam} \\
         --referenceFasta=${ref} \\
         --runDir=VCF
+    wait
 
     python2 \\
     VCF/runWorkflow.py \\
@@ -30,5 +32,6 @@ process variant_call {
     wait
     mv VCF/results/variants/*.vcf.gz* .
     wait
+    touch dummy.vcf.gz
     """
 }

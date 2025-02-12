@@ -1,10 +1,10 @@
 process LIMS_QC_API_CALL {
     label "proces_single"
-    tag "Making LIMS API input for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
+    tag "Making LIMS API input for ${meta.id}"
     
     input:
     tuple val(meta), path(qc_summary)
-    val subsampling
+    
     output:
     tuple val(meta), path("${meta.id}_input.json"), emit: ch_json_file
     
@@ -12,13 +12,31 @@ process LIMS_QC_API_CALL {
     """
     #!/usr/bin/env python3
     import json
-    if "${meta.subsampling}" == "false" or ${subsampling} == 'false':
-        qc_method = "TOTAL"
-    else:
-        qc_method = "AESPA"
+
     # Read QC summary file
     with open("${qc_summary}", 'r') as f:
         qc_data = dict(line.strip().split('\\t') for line in f)
+    
+    # Check QC conditions
+    fail_reasons = []
+    if float(qc_data["ASN_Freemix"]) > ${params.freemix_limit} or float(qc_data["ASN_Freemix"]) == 0:
+        fail_reasons.append('FM')
+    
+    if float(qc_data["Mappable reads % (out of de-duplicated reads)"]) < ${params.mapping_rate_limit}:
+        fail_reasons.append("MR")
+    
+    if float(qc_data["De-duplicated reads % (out of total reads)"]) < ${params.deduplicate_rate_limit}:
+        fail_reasons.append("DR")
+
+    # Set QC method
+    if "${meta.subsampling}" == "false":
+        qc_method = "TOTAL"
+    else:
+        qc_method = "AESPA"
+    
+    # If QC failed, append fail reasons to qc_method
+    if len(fail_reasons) > 0:
+        qc_method = f"{qc_method}:F"
 
     # Prepare API request payload
     payload = {
@@ -67,10 +85,12 @@ process LIMS_QC_API_CALL {
         "xxDistance": qc_data["Distance"],
         "xxFreemixAsn": qc_data["ASN_Freemix"],
         "xxFreemixEur": qc_data["EUR_Freemix"],
-        "qcMethod":qc_method,
-        "xxSex":qc_data["Sex"]
+        "qcMethod": qc_method,
+        "xxSex": qc_data["Sex"]
     }
+
     with open("${meta.id}_input.json", 'w') as f:
         json.dump([payload], f, indent = 4)
+
     """
 }

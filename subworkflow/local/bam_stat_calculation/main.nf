@@ -19,15 +19,15 @@ workflow calc_bams {
     bam_ch
         .combine(ref_ch)
         .set {ch_bam_combined}
-        
+    variant_call(ch_bam_combined)
+    pass_filter(variant_call.out.raw_vcf_file)
     calc_freemix_values(ch_bam_combined)
     calc_genome_coverage(bam_ch)
     calc_DOC(ch_bam_combined)
     calc_distance(bam_ch, calc_genome_coverage.out.ch_genomecov)
     calc_PE_insert_size(bam_ch)
     calc_samtools_flagstat(bam_ch)
-    variant_call(ch_bam_combined)
-    pass_filter(variant_call.out.raw_vcf_file)
+
 
     emit:
     flagstat_out_file = calc_samtools_flagstat.out

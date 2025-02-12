@@ -28,11 +28,15 @@ process calc_freemix_values {
     --no-orphans \
     --NumPC 4 \
     --Epsilon 1e-11
-
-    #if [ \$? -ne 0 ];then
-    #    echo -e "#SEQ_ID\\tRG\\tCHIP_ID\\t#SNPS\\t#READS\\tAVG_DP\\tFREEMIX\\tFREELK1\\tFREELK0\\tFREE_RH\\tFREE_RA\\tCHIPMIX\\tCHIPLK1\\tCHIPLK0\\tCHIP_RH\\tCHIP_RA\\tDPREF\\tRDPHET\\tRDPALT" > ${meta.id}.freemix.vb2.selfSM
-    #    echo -e "${meta.id}\\tNA\\tNA\\t100000\\tNA\\tNA\\t0.0\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA" >> ${meta.id}.freemix.vb2.selfSM
-    #fi
+    
+    # Capture the exit status
+    vb2_status=\$?
+    
+    # Create default output file if verifybamid2 fails or doesn't produce output
+    if [ \$vb2_status -ne 0 ] || [ ! -f "${meta.id}.freemix.vb2.selfSM" ]; then
+        echo -e "#SEQ_ID\\tRG\\tCHIP_ID\\t#SNPS\\t#READS\\tAVG_DP\\tFREEMIX\\tFREELK1\\tFREELK0\\tFREE_RH\\tFREE_RA\\tCHIPMIX\\tCHIPLK1\\tCHIPLK0\\tCHIP_RH\\tCHIP_RA\\tDPREF\\tRDPHET\\tRDPALT" > ${meta.id}.freemix.vb2.selfSM
+        echo -e "${meta.id}\\tNA\\tNA\\t100000\\tNA\\tNA\\t0.0\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA\\tNA" >> ${meta.id}.freemix.vb2.selfSM
+    fi
     set -e
     """
 }

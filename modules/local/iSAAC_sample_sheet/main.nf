@@ -1,6 +1,6 @@
 process CREATE_FASTQINPUT_SAMPLESHEET {
     tag "create iSAAC samplesheet for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
-
+    label 'process_single'
     input:
     tuple val(meta), path(preprocessed_dir)
 
@@ -13,6 +13,6 @@ process CREATE_FASTQINPUT_SAMPLESHEET {
 
     """
     echo "FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,Project" > ${meta.id}_iSAAC_input.csv
-    echo "${meta.fc_id},1,${meta.sample},${meta.sample_ref},,${meta.desc},${meta.control},${simplified_recipe},${meta.operator},${meta.order}" >> ${meta.id}_iSAAC_input.csv
+    echo "${meta.fc_id},1,${meta.sample},${meta.sample_ref},,Fastq only,${meta.control},${simplified_recipe},${meta.operator},${meta.order}" >> ${meta.id}_iSAAC_input.csv
     """
 }

@@ -1,4 +1,5 @@
 process confirm_check {
+    label 'process_single'
     tag "Demux confirm for ${meta.id}"
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/RapidQC_preprocessing":

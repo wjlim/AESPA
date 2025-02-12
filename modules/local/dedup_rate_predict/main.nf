@@ -13,6 +13,8 @@ process calc_dedup_rates {
 
     script:
     """
+    set -e
+    touch ${meta.id}.kmer_stats.csv
     dedup_rate_predict \\
     -f ${forward_read} \\
     -o ${meta.id}.kmer_stats.csv

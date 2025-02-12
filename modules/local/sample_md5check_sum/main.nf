@@ -1,5 +1,5 @@
 process sample_md5check_sum {
-    label "process_local"
+    label "process_single"
     tag "MD5 check for ${meta.sample}"
 
     input:
@@ -10,7 +10,9 @@ process sample_md5check_sum {
 
     script:
     """
-    md5sum ${forward_read} > ${meta.sample}.md5
+    set -e
+    touch ${meta.sample}.md5
+    md5sum ${forward_read} >> ${meta.sample}.md5
     md5sum ${reverse_read} >> ${meta.sample}.md5
     """
 }

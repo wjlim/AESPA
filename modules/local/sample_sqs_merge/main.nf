@@ -13,6 +13,8 @@ process sample_sqs_merge {
 
     script:
     """
+    set -e
+    touch ${meta.sample}.sqs
     sqs_merge.py \
         --sample_name ${meta.sample} \
         --input_file1 ${forward_read} \

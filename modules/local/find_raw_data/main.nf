@@ -1,7 +1,6 @@
 process FIND_RAW_DATA {
     label "process_single"
     tag "sample_sheet converting for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
-    publishDir "${params.outdir}/${meta.sample}/Fastq", mode: "link", overwrite: true
         
     input:
     tuple val(meta), path(samplesheet_dir)

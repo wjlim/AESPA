@@ -1,4 +1,5 @@
 process raw_data_search {
+    label 'process_single'
     tag "Samplesheet validation"
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/RapidQC_preprocessing":
@@ -9,7 +10,7 @@ process raw_data_search {
     path run_dir
 
     output:
-    path 'samplesheet.valid.csv', emit: ch_samplesheet_path
+    path "samplesheet.valid.csv", emit: ch_samplesheet_path
 
     script:
     """
@@ -36,9 +37,11 @@ process raw_data_search {
             fastq_1_file = glob(fastq_1_pattern)
             fastq_2_file = glob(fastq_2_pattern)
             
-            assert len(fastq_1_file) == 1 and len(fastq_2_file) == 1, f"Not valid raw data paths: {fastq_1_pattern}, {fastq_2_pattern}"
-            row['fastq_1'] = os.path.abspath(fastq_1_file[0])
-            row['fastq_2'] = os.path.abspath(fastq_2_file[0])
-            writer.writerow(row)
+            if len(fastq_1_file) == 1 and len(fastq_2_file) == 1:
+                row['fastq_1'] = os.popen(f'readlink -f {fastq_1_file[0]}').read().strip()
+                row['fastq_2'] = os.popen(f'readlink -f {fastq_2_file[0]}').read().strip()
+                writer.writerow(row)
+            else:
+                print(f"Skipping invalid raw data paths: {fastq_1_pattern}, {fastq_2_pattern}")
     """
 }

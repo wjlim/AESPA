@@ -1,5 +1,5 @@
 process calc_genome_coverage {
-    label "process_single"
+    label "process_low"
     tag "Get genome cov for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     conda NXF_OFFLINE == 'true' ?
         "${params.conda_env_path}/envs/calc_bam_stat":
@@ -14,6 +14,9 @@ process calc_genome_coverage {
 
     script:
     """
+    set -e
+    touch ${meta.id}.genomecov
+    touch ${meta.id}.sex
     bedtools \\
         genomecov \\
         -ibam ${out_bam} \\

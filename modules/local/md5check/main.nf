@@ -1,5 +1,5 @@
 process md5check_sum {
-    label "process_local"
+    label "process_single"
 
     tag "MD5 check for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
 

@@ -1,199 +1,176 @@
 # AESPA: Accurate and Efficient Sub-sampling Pipeline for WGS analysis
 
 ## Overview
-This pipeline is designed to perform quality control (QC) for whole genome sequencing (WGS) data by conducting 3x subsampling. 
-The entire workflow is modularized using Nextflow.
+AESPA (Accurate and Efficient Sub-sampling Pipeline for WGS analysis) is a robust and efficient Nextflow-based pipeline designed for whole genome sequencing (WGS) analysis. The pipeline implements a sophisticated QC workflow with subsampling capabilities to optimize resource usage while maintaining high accuracy.
 
-## 🌟 Features
-Efficient QC Processing: Subsampling and QC for WGS data.
-Modular Design: All processes are modularized for ease of maintenance and customization.
-Conda Integration: Each sub-workflow has a dedicated Conda environment.
+## Key Features
 
-## 📋 Requirements
-Nextflow: Version 23.10.1 or higher
-Sun Grid Engine: For job scheduling
-Conda: For managing software dependencies
+### 1. Modular Architecture
+- **Preprocessing Module**: Handles initial data preparation and QC
+- **Alignment Options**: Supports both iSAAC and BWA-MEM2 aligners
+- **Comprehensive QC**: Includes contamination checks, coverage analysis, and variant calling
+- **API Integration**: Built-in LIMS integration for automated reporting
 
-## 📂 Directory Structure
+### 2. Advanced QC Metrics
+- Freemix contamination assessment
+- Depth of coverage analysis
+- Insert size distribution
+- Mapping quality metrics
+- Sex determination
+- Variant statistics
+
+### 3. Performance Optimization
+- Intelligent subsampling based on coverage requirements
+- Parallel processing capabilities
+- SGE cluster support
+- Conda environment management
+
+## Pipeline Structure
 
 ```
-wgs_qc
-├── apps
-│   └── GenomeAnalysisTK-3.7
-├── bin
-│   ├── batch.sh
-│   ├── DOC_distance.py
-│   ├── extract_variants
-│   ├── samtools_flagstat.py
-│   ├── sqs_generate.py
-│   ├── stat_summary.py
-│   ├── subsampler.sh
-│   └── summary_stat.py
-├── conf
-│   ├── reference.json
-│   ├── sge_conda.config
-│   └── sge_local.config
-├── input.json
-├── main.nf
-├── nextflow.config
-├── run.nf_test.sh
-├── src
-│   ├── genome.dict
-│   ├── genome.fa
-│   ├── genome.fa.fai
-│   └── sorted-reference.xml
-└── workflow
-    ├── bam_stat_calculation.nf
-    ├── bam_stat_calculation.picard.yml
-    ├── bam_stat_calculation.yml
-    ├── iSAAC_pipeline.nf
-    ├── iSAAC_pipeline.yml
-    ├── preprocessing.nf
-    ├── preprocessing.yml
-    ├── strelka_variant_call.nf
-    ├── strelka_variant_call.yml
-    ├── summary_qc_stat.nf
-    └── summary_qc_stat.yml
+AESPA/
+├── bin/                    # Executable scripts
+├── src/                    # reference genome and indexes
+├── app/                    # GATK3.7
+├── conf/                   # Configuration files
+├── modules/                # Individual process modules
+├── subworkflow/            # Composite workflow components
+├── workflow/               # Main workflow definitions
+├── analysis.AESPA.sh       # Wrapper script for running the pipeline
+├── main.nf                 # Pipeline entry point
+└── nextflow.config         # Nextflow configuration
 ```
 
-## 🛠 Installation
+## Workflow Steps
 
-```sh
-conda install git
-conda env create -f workflow/preprocessing.yml
-conda env create -f workflow/iSAAC_pipeline.yml
-conda env create -f workflow/bam_stat_calculation.yml
-conda env create -f workflow/strelka_variant_call.yml
-conda env create -f workflow/summary_qc_stat.yml
-```
+1. **Input Processing**
+   - Sample sheet validation
+   - Raw data quality assessment
+   - Subsampling determination
 
-## 🚀 Usage
-### Running the Pipeline
-To run the pipeline with Conda environments enabled:
-```sh
-nextflow run main.nf -profile sge_conda_env --json_file input.json
-```
+2. **Alignment**
+   - Choice between iSAAC and BWA-MEM2
+   - BAM file generation and sorting
+   - Duplicate marking
 
-To run the pipeline with local environments:
-```sh
-nextflow run main.nf -profile sge_local_env --json_file input.json
-```
+3. **Quality Control**
+   - Coverage analysis
+   - Contamination assessment
+   - Variant calling
+   - Sex determination
 
-### Pipeline Options
-#### Merge Step
-- Use `--merge_flag` to control whether to run only the merge step
-- Default: false (runs full pipeline)
-```sh
-# Run only merge step
-nextflow run main.nf -profile sge --merge_flag true
+4. **Reporting**
+   - QC metrics compilation
+   - LIMS API integration
+   - Results delivery
 
-# Run full pipeline
-nextflow run main.nf -profile sge --merge_flag false
-```
+## Configuration Options
 
-#### LIMS Integration
-- Use `--lims_qc` to enable/disable LIMS QC reporting
-- Default: true (enables LIMS QC reporting)
-```sh
-# Enable LIMS QC reporting
-nextflow run main.nf -profile sge --lims_qc true
-
-# Disable LIMS QC reporting
-nextflow run main.nf -profile sge --lims_qc false
-```
-
-### Configuration Parameters
-Key pipeline parameters can be configured in `nextflow.config`:
 ```groovy
 params {
-    merge_flag = false    // Set to true to only run merge step
-    lims_qc = true       // Set to false to disable LIMS QC reporting
-    target_x = 5         // Target coverage depth for subsampled reads
+    // Core Parameters
+    max_memory = 210.GB
+    max_cpus = 32
+    max_time = 240.h
     
-    // QC thresholds
-    freemix_limit = 0.05          // Upper limit of freemix value
-    mapping_rate_limit = 88       // Lower limit of mapping rate (%)
-    deduplicate_rate_limit = 78   // Lower limit of deduplicate rate (%)
+    // QC Thresholds
+    freemix_limit = 0.05
+    mapping_rate_limit = 88
+    deduplicate_rate_limit = 78
+    
+    // Pipeline Options
+    aligner = 'iSAAC'  // or 'bwa'
+    target_x = 5       // Target coverage
+    sub_limit = 0.6    // Subsampling threshold
 }
 ```
 
-### Running the pipeline with Wrapper
-```
-call_AESPA_pipeline.sh -s sample_sheet.csv -f forward_read -r reverse_read -o output_dir
-```
+## Usage Examples
 
-### Wrapper Script
-
-```sh
-#!/bin/bash
-CONDA_BASE=$(conda info --base)
-source "$CONDA_BASE/etc/profile.d/conda.sh"
-
-# Call the Nextflow pipeline
-src_dir=$(dirname $(readlink -f $0))
-working_dir=${result_dir}/work
-nf_temp=${result_dir}/temp
-export NXF_WORK=${working_dir}
-export NXF_TEMP=${nf_temp}
-export NXF_CACHE_DIR=${working_dir}/.nextflow
-export NXF_LOG_FILE=${working_dir}/.nextflow.log
-export NXF_PLUGINS_DIR=${working_dir}/plr
-export NXF_HOME=${working_dir}/.nextflow
-# export NXF_OFFLINE=true
-
-mkdir -p ${result_dir}
-mkdir -p ${working_dir}
-mkdir -p ${nf_temp}
-
-nextflow run ${src_dir}/main.nf \
-    -profile sge_conda_env \
-    --sample_sheet "${sample_sheet}" \
-    --forward_read "${forward_read}" \
-    --reverse_read "${reverse_read}" \
-    --result_dir "${result_dir}" \
-    -with-report "${result_dir}/reports/nf_out.report.html" \
-    -with-dag "${result_dir}/reports/flowchart.png" \
-    -with-timeline "${result_dir}/reports/nf_out.timeline.report.html" \
-    -with-trace "${result_dir}/reports/nf_out.trace.txt" \
-    -bg \
-    -resume &> "${result_dir}/runLog.txt"
-
+### Basic Run
+```bash
+nextflow run main.nf -profile sge \
+    --outdir results \
+    --sample_sheet samples.csv \
+    --order_info order_info.txt \
+    --run_dir /path/to/data
 ```
 
-## 🧬 Workflow Details
-Submodules
-Preprocessing (preprocessing.nf)
-iSAAC Alignment (iSAAC_pipeline.nf)
-BAM Statistics Calculation (bam_stat_calculation.nf)
-Variant Calling (strelka_variant_call.nf)
-QC Summary (summary_qc_stat.nf)
-
-## Example for bam_stat_calculation.yml
-```yaml
-name: calc_bam_stat
-channels:
-  - defaults
-  - conda-forge
-  - bioconda
-dependencies:
-  - python=3.11.3
-  - verifybamid2=2.0.1
-  - bedtools
-  - pip
-  - pip:
-      - scipy
-      - pysam
+### With Custom Parameters
+```bash
+nextflow run main.nf \
+    -profile sge \
+    --aligner 'bwa' \
+    --target_x 10 \
+    --freemix_limit 0.03
 ```
 
-## 📄 Attached Reference Genome
-RefSeq version Human Genome (GRCh38;hg38) without scaffolds.
+## Performance Metrics
 
-## ⚙️ Customization
-Conda Integration: Enable Conda environments with conda.enabled=true.
-Local Environment: Configure paths in conf/sge_local.config.
-Change Reference: Modify the file paths on the reference json file in conf/reference.json
+- Processing Time: ~1-2 hours per sample (30X coverage)
+- Memory Usage: Peak 40GB per sample
+- CPU Utilization: Efficiently scales up to 32 cores
+- Storage: ~100GB per sample (temporary files)
 
-## 📊 Performance
-Speed: 3-4 times faster than the traditional iSAAC pipeline.
-Resource Usage: Approx. 1 hour runtime with a max memory usage of 40GB.
-Accuracy: Moderate error (MSE 3-5) with accurate mappable mean depth, deduplication rate, and contaminated reads.
+## Dependencies
+
+- Nextflow ≥ 24.10.4
+- Conda/Mamba
+- SGE cluster environment
+- Reference Genomes (GRCh38)
+- Python ≥ 3.8
+
+## Error Handling
+
+The pipeline implements robust error handling:
+- Automatic retry for cluster failures
+- Comprehensive logging
+- Input validation checks
+- Resource monitoring
+
+## Output Structure
+
+```
+results/
+├── ${sample}/
+│   ├── ${FCID}.${lane}.bam_stats/
+│   │   ├── *.fq_stats.csv           # FastQ statistics
+│   │   ├── *.kmer_stats.csv         # K-mer analysis results
+│   │   ├── *.freemix.vb2.Ancestry   # Contamination assessment
+│   │   ├── *.freemix.vb2.selfSM     # Sample identity check
+│   │   ├── *.flagstat               # Alignment statistics
+│   │   ├── *.sex                    # Sex determination results
+│   │   ├── *.genomecov             # Genome coverage statistics
+│   │   ├── *.depthofcov.*          # Depth of coverage analysis
+│   │   └── *.QC.summary            # Final QC summary report
+│   ├── ${FCID}.${lane}.VCF/
+│   │   ├── variants.vcf.gz          # Compressed variant calls
+│   │   ├── variants.vcf.gz.tbi      # Variant index file
+│   │   ├── genome.vcf.gz            # Full genome VCF
+│   │   ├── genome.S1.vcf.gz         # Sample-specific VCF
+│   │   └── all_passed_variants.vcf  # Filtered variants
+│   ├── BLAST/
+│   │   └── blast_top_10.txt         # Top BLAST hits
+│   └── API_CALL/
+│       └── *_input.json             # LIMS API input data
+```
+
+Each sample directory contains:
+1. BAM statistics directory with comprehensive QC metrics
+2. VCF directory containing variant calls and indexes
+3. BLAST analysis results for unmapped reads
+4. API call data for LIMS integration
+
+## Future Developments
+
+1. Integration of additional aligners
+2. Enhanced variant calling capabilities
+3. Machine learning-based QC prediction
+4. Cloud platform support, TBD
+5. Container support (Docker/Singularity) ,TBD
+
+## License
+MIT License
+
+## Contact
+For support and questions, please contact: wonjun.lim@psomagen.com

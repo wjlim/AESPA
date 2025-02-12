@@ -14,6 +14,7 @@ process calc_DOC {
 
     script:
     """
+    set -e
     java \
         -Xmx25g \
         -jar $GATK3 \
@@ -26,5 +27,6 @@ process calc_DOC {
         --omitIntervalStatistics \
         --omitLocusTable \
         -nt 30
+    touch ${meta.id}.depthofcov.sample_summary
     """
 }

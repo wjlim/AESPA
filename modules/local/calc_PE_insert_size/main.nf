@@ -13,6 +13,8 @@ process calc_PE_insert_size {
 
     script:
     """
+    set -e
+    touch ${meta.id}.insert_size_metrics
     /mmfs1/lustre2/BI_Analysis/bi2/anaconda3/envs/picard_env/bin/picard \\
         CollectInsertSizeMetrics \\
         H=insert_size_hist.pdf \\

@@ -14,8 +14,10 @@ process calc_distance {
     
     script:
     """
+    set -e
     DOC_distance.py \\
         ${genome_coverage} \\
         > ${meta.id}.depthofcov.stat
+    touch ${meta.id}.depthofcov.sample_summary
     """
 }

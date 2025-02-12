@@ -1,5 +1,5 @@
 process iSAAC_alignment {
-    label "process_high"
+    label "process_medium"
     tag "iSAAC_alignment for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     // publishDir "${params.outdir}/${meta.sample}/${params.prefix}", mode: 'copy'
     conda NXF_OFFLINE == 'true' ?
@@ -13,7 +13,8 @@ process iSAAC_alignment {
     tuple val(meta), path("IsaacAlignment/Projects/${meta.order}/*/sorted.bam"), path("IsaacAlignment/Projects/${meta.order}/*/sorted.bam.bai"), emit: ch_bam
     
     script:
-    def memoryValue = task.memory.toGiga()
+    // def memoryValue = task.memory.toGiga()
+    // def cpus = Math.max(1, int(memoryValue / 6)) // Ensure at least 1 CPU is allocated
     """
     iSAAC_temp=\$(mktemp -d)
     isaac-align \\

@@ -10,6 +10,9 @@ process sample_sqs_calc {
     
     script:
     """
+    set -e
+    touch ${meta.sample}_1.fq_stats.csv
+    touch ${meta.sample}_2.fq_stats.csv
     sqs_calc ${forward_read} -o ${meta.sample}_1.fq_stats.csv &
     sqs_calc ${reverse_read} -o ${meta.sample}_2.fq_stats.csv
     """

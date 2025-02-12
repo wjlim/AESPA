@@ -1,0 +1,10 @@
+name: blast_unmapped_env
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - samtools=1.3
+  - bedtools=2.25.0
+  - seqtk
+  - blast=2.7.1

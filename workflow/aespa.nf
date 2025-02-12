@@ -13,19 +13,10 @@ workflow AESPA {
     ch_samplesheet          // Input samplesheet channel
     ch_ref_path            // Reference genome path
     ch_bwamem2_index_path  // BWA-MEM2 index path
-    subsampling            // Subsampling flag
+    subsampling_flag       // Subsampling flag
 
     main:
-    // Update samplesheet with subsampling flag
-    ch_samplesheet
-        .map { meta, fastq1, fastq2 ->
-            meta.subsampling = subsampling
-            [meta, fastq1, fastq2]
-        }
-        .set { ch_samplesheet_updated }
-    
-    // Run preprocessing workflow - includes QC and subsampling if needed
-    preprocessing(ch_samplesheet_updated, subsampling)
+    preprocessing(ch_samplesheet, subsampling_flag)
 
     // Select and execute alignment workflow based on chosen aligner
     if (params.aligner == 'iSAAC') {
@@ -35,6 +26,7 @@ workflow AESPA {
             ch_ref_path
         )
         ch_bams = iSAAC_alignment_workflow.out.ch_bam
+
     } else {
         // Run BWA-MEM2 alignment pipeline
         bwamem2_alignment_workflow(
@@ -59,16 +51,17 @@ workflow AESPA {
     // - Coverage distribution
     // - Sex determination
     calc_bams.out.ch_filtered_vcf
-        .join(preprocessing.out.ch_sqs_file)
-        .join(preprocessing.out.ch_dedup_rates)
-        .join(calc_bams.out.flagstat_out_file)
-        .join(calc_bams.out.picard_insertsize_file)
-        .join(calc_bams.out.gatk_doc_file)
-        .join(calc_bams.out.freemix_out_file)
-        .join(calc_bams.out.doc_distance_out_file)
-        .join(calc_bams.out.ch_sex)
-        .map { meta, out_vcf, sqs_file, kmer_out, flagstat_out, picard_insertsize, GATK_DOC, freemix_out, doc_distance_out_file, sex_file ->
-            [meta, out_vcf, sqs_file, kmer_out, flagstat_out, picard_insertsize, GATK_DOC, freemix_out, doc_distance_out_file, sex_file]
+        .map { meta, out_vcf -> tuple(meta.id, meta, out_vcf) }
+        .join(preprocessing.out.ch_sqs_file.map { meta, sqs_file -> tuple(meta.id, meta, sqs_file) })
+        .join(preprocessing.out.ch_dedup_rates.map { meta, dedup_rates -> tuple(meta.id, meta, dedup_rates) })
+        .join(calc_bams.out.flagstat_out_file.map { meta, flagstat_out -> tuple(meta.id, meta, flagstat_out) })
+        .join(calc_bams.out.picard_insertsize_file.map { meta, picard_insertsize -> tuple(meta.id, meta, picard_insertsize) })
+        .join(calc_bams.out.gatk_doc_file.map { meta, GATK_DOC -> tuple(meta.id, meta, GATK_DOC) })
+        .join(calc_bams.out.freemix_out_file.map { meta, freemix_out -> tuple(meta.id, meta, freemix_out) })
+        .join(calc_bams.out.doc_distance_out_file.map { meta, doc_distance_out_file -> tuple(meta.id, meta, doc_distance_out_file) })
+        .join(calc_bams.out.ch_sex.map { meta, sex_file -> tuple(meta.id, meta, sex_file) })
+        .map { id, meta, out_vcf, sqs_file, dedup_rates, flagstat_out, picard_insertsize, GATK_DOC, freemix_out, doc_distance_out_file, sex_file ->
+            [meta, out_vcf, sqs_file, dedup_rates, flagstat_out, picard_insertsize, GATK_DOC, freemix_out, doc_distance_out_file, sex_file]
         }
         .set { ch_summary_qc_input }
         
@@ -76,6 +69,6 @@ workflow AESPA {
     summary_qc(ch_summary_qc_input)
 
     emit:
+    ch_bam = ch_bams
     ch_qc_report = summary_qc.out.qc_report    // Final QC report output
-    ch_subratio = preprocessing.out.ch_subratio // Actual subsampling ratio used
 }

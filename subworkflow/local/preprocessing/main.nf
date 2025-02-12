@@ -20,62 +20,39 @@ workflow preprocessing {
     
     calc_dedup_rates(ch_samplesheet)
     estimate_total_read(ch_samplesheet)
-    
+
     ch_samplesheet
         .join(estimate_total_read.out.ch_total_reads)
-        .set { ch_combined_for_subsampling }
-        
-    subsampling(ch_combined_for_subsampling)
-    if (subsampling_flag == true) {
-        subsampling.out.ch_sub_samplesheet
-            .join(subsampling.out.ch_subsampling_flag)
-            .map{meta, fastq_1, fastq_2, flag -> 
-                def flag_result = file(flag).text.trim()
-                if (flag_result == 'true') {
-                    meta.subsampling = true
-                }
-                else {
-                    meta.subsampling = false
-                }
-                return [meta, fastq_1, fastq_2]
+        .map { meta, fastq_1, fastq_2, sub_ratio_str ->
+            def sub_ratio = 1.0
+            try {
+                sub_ratio = sub_ratio_str.trim().toFloat()
+            } catch (Exception e) {
+                println "Warning: Error parsing sub_ratio, using default value 1.0"
             }
-            .set {ch_updated_sub_samplesheet}
             
-        subsampling.out.processed_dir
-            .join(subsampling.out.ch_subsampling_flag)
-            .map{meta, dir, flag -> 
-                def flag_result = file(flag).text.trim()
-                if (flag_result == 'true') {
-                    meta.subsampling = true
-                }
-                else {
+            meta.sub_ratio = sub_ratio
+            def original_coverage = params.target_x / sub_ratio
+            def coverage_limit = params.coverage_limit ?: 40
+            
+            meta.subsampling = true
+            if (subsampling_flag == false) {
+                meta.subsampling = false
+            } else {
+                if ((sub_ratio > params.sub_limit) || (original_coverage > coverage_limit)) {
                     meta.subsampling = false
                 }
-                return [meta, dir]
             }
-            .set {ch_updated_prcessed_dir}
-    }
-    else {
-        subsampling.out.ch_sub_samplesheet
-            .map{meta, fastq_1, fastq_2 -> 
-                meta.subsampling = false
-                return [meta, fastq_1, fastq_2]
-            }
-            .set {ch_updated_sub_samplesheet}
+            println("sub_ratio: ${sub_ratio}, original_coverage: ${original_coverage}, coverage_limit: ${params.coverage_limit}; subsampling_flag: ${meta.subsampling}")
+            return [meta, fastq_1, fastq_2]
+        }
+        .set { ch_samplesheet_with_meta }
 
-        subsampling.out.processed_dir
-            .join(subsampling.out.ch_subsampling_flag)
-            .map{meta, dir, flag -> 
-                meta.subsampling = false
-                return [meta, dir]
-            }
-            .set {ch_updated_prcessed_dir}
-    }
+    subsampling(ch_samplesheet_with_meta)
     
     emit:
-    ch_sub_samplesheet = ch_updated_sub_samplesheet
-    ch_processed_dir = ch_updated_prcessed_dir
+    ch_sub_samplesheet = subsampling.out.ch_sub_samplesheet
+    ch_processed_dir = subsampling.out.processed_dir
     ch_dedup_rates = calc_dedup_rates.out.dedup_out
     ch_sqs_file = sqs_merge.out.sqs_file
-    ch_subratio = subsampling.out.ch_ratio_file
 }

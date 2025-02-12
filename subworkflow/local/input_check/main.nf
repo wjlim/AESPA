@@ -31,6 +31,7 @@ workflow INPUT_CHECK {
                 order:row.Project_x,
                 lib_type:row.LibraryType,
                 species:row.Species_y,
+                species_x:row.Species_x,
                 app:row.ApplicationType_x,
                 grade:row.OrderGrade,
                 run_scale:row.RunScale_x,
@@ -48,6 +49,7 @@ workflow INPUT_CHECK {
             [meta, row.fastq_1, row.fastq_2]
         }
         .set {ch_samplesheet}
+
     emit:
     ch_merged_samplesheet = ch_samplesheet
 }

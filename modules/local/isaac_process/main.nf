@@ -1,5 +1,5 @@
 process ISAAC_PROCESS {
-    label 'process_high'
+    label 'process_medium'
     // tag "${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     // publishDir "${params.outdir}", mode: 'copy'
     input:

@@ -1,5 +1,6 @@
 process info_check {
     label 'process_single'
+    publishDir "${params.outdir}/info_check", mode: 'copy'
     input:
     path(sample_sheet)
     path(order_info)
@@ -7,7 +8,7 @@ process info_check {
         "${params.conda_env_path}/envs/RapidQC_preprocessing":
         "${baseDir}/conf/preprocessing.yml"    
     output:
-    path('sample_sheet.valid.merged.csv'), emit:ch_valid_samplesheet_path
+    path("${params.prefix}.sample_sheet.valid.merged.csv"), emit:ch_valid_samplesheet_path
     
     script:
 
@@ -75,9 +76,12 @@ process info_check {
     except Exception as e:
         print(f"Error loading ${sample_sheet}: {e}")
         exit(1)
-    merged_df = pd.merge(samplesheet_df.astype(str), order_info_df.astype(str), on='SampleID', how='left')
+    
+    # Perform an inner join to include only records present in both dataframes
+    merged_df = pd.merge(samplesheet_df.astype(str), order_info_df.astype(str), on='SampleID', how='inner')
+    
     if merged_df.shape[0] == 0:
         raise ValueError("No matching records found after merging sample sheet and order info")
-    merged_df.to_csv('sample_sheet.valid.merged.csv', index = False)
+    merged_df.to_csv('${params.prefix}.sample_sheet.valid.merged.csv', index = False)
     """
 }

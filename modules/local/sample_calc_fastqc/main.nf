@@ -16,7 +16,11 @@ process sample_calc_fastqc {
     script:
     def wgs_dest_path = params.wgs_dest_path
     """
+    set -e
     mkdir -p Fastqc/
+    touch Fastqc/dummy.zip
+    touch Fastqc/dummy.html    
     fastqc -t ${task.cpus} ${forward_read} ${reverse_read} -o Fastqc/
+
     """
 }

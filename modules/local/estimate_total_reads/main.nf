@@ -6,19 +6,26 @@ process estimate_total_read {
     tuple val(meta), path(forward_read), path(reverse_read)
 
     output:
-    tuple val(meta), path('estimate_total_reads.csv'), emit:ch_total_reads
+    tuple val(meta), stdout, emit: ch_total_reads
 
     script:
-    // sequence + quality lines : ~300 characters per read
+    def target_x = params.target_x ?: 5
+    def read_length = 151
+    def genome_size = 3000000000
     def avg_read_size = 300
-
     """
+    #!/bin/bash
     fastq="${forward_read}"
     file_size=\$(stat -c %s \$(readlink -f \${fastq}))
-    #compression efficiency : 4 times
     uncompressed_file_size=\$(echo "\${file_size} * 4"|bc)
     total_lines=\$(echo "\${uncompressed_file_size} / ${avg_read_size}"|bc)
-    #for Paired-end reads
-    echo "\${total_lines} * 2" | bc > estimate_total_reads.csv
+    total_reads=\$(echo "\${total_lines} * 2" | bc)
+
+    total_bp_needed=\$(echo "${target_x} * ${genome_size}" | bc)
+    current_bp=\$(echo "\${total_reads} * ${read_length}" | bc)
+    
+    sub_ratio=\$(echo "scale=4; \${total_bp_needed} / \${current_bp}" | bc) || sub_ratio=1.0
+    
+    echo "\${sub_ratio}"
     """
 }

@@ -13,6 +13,8 @@ process calc_samtools_flagstat {
 
     script:
     """
+    set -e 
+    touch ${meta.id}.flagstat
     samtools_flagstat.py ${out_bam} > ${meta.id}.flagstat
     """
 }

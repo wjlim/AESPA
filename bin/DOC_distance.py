@@ -29,7 +29,8 @@ class GenomeCoverageAnalyzer:
         count_nums = [self.depth[pos] for pos in sorted_keys]
         count_freq = [self.depth[pos] / total_count for pos in sorted_keys]
         cum_freq = np.cumsum(count_freq)
-
+        if freq_sd == 0:
+            freq_sd = 1
         mode_index = max(self.depth, key=self.depth.get)
         mode_value = (mode_index - freq_mean) / freq_sd
         q75, q25 = np.percentile(sorted_keys, [75 ,25])
