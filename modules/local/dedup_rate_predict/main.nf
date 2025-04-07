@@ -15,8 +15,10 @@ process calc_dedup_rates {
     """
     set -e
     touch ${meta.id}.kmer_stats.csv
-    dedup_rate_predict \\
-    -f ${forward_read} \\
-    -o ${meta.id}.kmer_stats.csv
+    if [ "${meta.subsampling}" == "true" ]; then
+        dedup_rate_predict \\
+        -f ${forward_read} \\
+        -o ${meta.id}.kmer_stats.csv
+    fi
     """
 }

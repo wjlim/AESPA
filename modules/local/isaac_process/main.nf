@@ -1,6 +1,6 @@
 process ISAAC_PROCESS {
     label 'process_medium'
-    // tag "${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
+    tag "ISAAC alignment for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
     // publishDir "${params.outdir}", mode: 'copy'
     input:
     tuple val(meta), path(json_file)

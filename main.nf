@@ -38,19 +38,18 @@ workflow {
         )
         .set { ch_bwamem2_index_path }
     INPUT_CHECK.out.ch_merged_samplesheet
-        .flatMap { meta, fastq_1, fastq_2 -> 
+        .map { meta, fastq_1, fastq_2 -> 
             // if (meta.app == 'Whole Genome Resequencing' &&
                 // meta.desc == 'Fastq only' &&
                 // (meta.species == 'Human' || meta.species_x == 'Homo sapiens(human)') &&
                 // meta.service_group != 'CLIA') 
             if (meta.species == 'Human' || meta.species_x == 'Homo sapiens(human)')
             {
-                return [[meta, fastq_1, fastq_2]]
+                return tuple(meta, fastq_1, fastq_2)
             }
             return []
         }
         .set { ch_samplesheet_mix }
-
     def mergeFlag = params.merge_flag.toString().toLowerCase().toBoolean()
     def merge = params.merge.toString().toLowerCase().toBoolean()
 
@@ -117,7 +116,7 @@ workflow {
     else {
         ch_samplesheet_mix
             .map {meta, fastq_1, fastq_2 ->
-                return [meta.sample, [meta, fastq_1, fastq_2]]
+                return tuple(meta.sample, [meta, fastq_1, fastq_2])
             }
             .groupTuple()
             .flatMap { sample, group ->

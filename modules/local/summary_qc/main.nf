@@ -106,7 +106,10 @@ process summary_qc {
 
     def main():
         sqs_df = sqs_parser("${sqs_file}")
-        kmer_df = pd.read_csv("${kmer_out}")
+        try:
+            kmer_df = pd.read_csv("${kmer_out}")
+        except:
+            kmer_df = pd.DataFrame(columns=['Deduplicated Rate'])
         flagstat_df = pd.read_table("${flagstat_out}", header=None, index_col=0).T
         try:
             picard_is_df = pd.read_table("${picard_insertsize}", skip_blank_lines=True, comment='#', header=0, nrows=1)
@@ -117,6 +120,7 @@ process summary_qc {
             insert_std = 0
         try:
             GATK_DOC_df = pd.read_table("${GATK_DOC}", header=0, nrows=1)
+            mean_depth = GATK_DOC_df['mean'][0]
             cov_1x = GATK_DOC_df['%_bases_above_1'][0]
             cov_5x = GATK_DOC_df['%_bases_above_5'][0]
             cov_10x = GATK_DOC_df['%_bases_above_10'][0]
@@ -124,6 +128,7 @@ process summary_qc {
             cov_20x = GATK_DOC_df['%_bases_above_20'][0]
             cov_30x = GATK_DOC_df['%_bases_above_30'][0]
         except:
+            mean_depth = 0
             cov_1x = 0
             cov_5x = 0
             cov_10x = 0
@@ -147,9 +152,14 @@ process summary_qc {
             dedupped_reads = total_reads - duplicates
             dedup_rate = dedupped_reads / float(total_reads)
         else:
-            dedup_rate = ((float(kmer_df['Deduplicated Rate'][0].replace('%','')) - 16.47) * 1.25 ) / 100
-            dedupped_reads = int(total_reads * dedup_rate)
-
+            try:
+                dedup_rate = ((float(kmer_df['Deduplicated Rate'][0].replace('%','')) - 16.47) * 1.25 ) / 100
+                dedupped_reads = int(total_reads * dedup_rate)
+            except:
+                dedup_rate = 0
+                dedupped_reads = 0
+        if dedup_rate >= 100:
+            dedup_rate = 99.99
         sub_total_reads = flagstat_df['total_read'][1]
         sub_mapped_reads = flagstat_df['mappable_reads'][1]
         sub_duplicates = int(flagstat_df['all_duplicates'][1])
@@ -157,7 +167,11 @@ process summary_qc {
         dedupped_mapping_rate = sub_mapped_reads / (sub_total_reads - sub_duplicates)
         dedupped_mapped_reads = dedupped_reads * mapping_rate
         mapped_yield = int(dedupped_reads * avg_read_length * dedupped_mapping_rate)
-        mapped_mean_depth = mapped_yield / genome_size
+        if "${meta.subsampling}" == "false" and mean_depth != 0:
+            mapped_mean_depth = mean_depth
+        else:
+            mapped_mean_depth = mapped_yield / genome_size
+
         cov_1x = GATK_DOC_df['%_bases_above_1'][0]
         cov_5x = GATK_DOC_df['%_bases_above_5'][0]
         cov_10x = GATK_DOC_df['%_bases_above_10'][0]

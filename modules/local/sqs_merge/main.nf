@@ -9,12 +9,10 @@ process sqs_merge {
     tuple val(meta), path(forward_input), path(reverse_input)
 
     output:
-    tuple val(meta), path('*.sqs'), emit: sqs_file
+    tuple val(meta), path("${meta.id}.sqs"), emit: sqs_file
 
     script:
     """
-    set -e
-    touch ${meta.id}.sqs
     sqs_merge.py \
         --sample_name ${meta.id} \
         --input_file1 ${forward_input} \

@@ -10,8 +10,15 @@ workflow iSAAC_alignment_workflow {
 
     main:
     CREATE_FASTQINPUT_SAMPLESHEET(ch_preprocess)
-    ch_preprocess
-        .join(CREATE_FASTQINPUT_SAMPLESHEET.out.ch_isaac_samplesheet)
+    ch_preprocess.map{meta, processed_dir ->
+        tuple(meta.id, meta, processed_dir)
+    }
+        .join(CREATE_FASTQINPUT_SAMPLESHEET.out.ch_isaac_samplesheet.map{meta, sample_sheet ->
+            tuple(meta.id, sample_sheet)
+        })
+        .map{id, meta, processed_dir, sample_sheet ->
+            [meta, processed_dir, sample_sheet]
+        }
         .combine(ref_ch)
         .set { ch_combined }
 

@@ -52,14 +52,14 @@ workflow AESPA {
     // - Sex determination
     calc_bams.out.ch_filtered_vcf
         .map { meta, out_vcf -> tuple(meta.id, meta, out_vcf) }
-        .join(preprocessing.out.ch_sqs_file.map { meta, sqs_file -> tuple(meta.id, meta, sqs_file) })
-        .join(preprocessing.out.ch_dedup_rates.map { meta, dedup_rates -> tuple(meta.id, meta, dedup_rates) })
-        .join(calc_bams.out.flagstat_out_file.map { meta, flagstat_out -> tuple(meta.id, meta, flagstat_out) })
-        .join(calc_bams.out.picard_insertsize_file.map { meta, picard_insertsize -> tuple(meta.id, meta, picard_insertsize) })
-        .join(calc_bams.out.gatk_doc_file.map { meta, GATK_DOC -> tuple(meta.id, meta, GATK_DOC) })
-        .join(calc_bams.out.freemix_out_file.map { meta, freemix_out -> tuple(meta.id, meta, freemix_out) })
-        .join(calc_bams.out.doc_distance_out_file.map { meta, doc_distance_out_file -> tuple(meta.id, meta, doc_distance_out_file) })
-        .join(calc_bams.out.ch_sex.map { meta, sex_file -> tuple(meta.id, meta, sex_file) })
+        .join(preprocessing.out.ch_sqs_file.map { meta, sqs_file -> tuple(meta.id, sqs_file) })
+        .join(preprocessing.out.ch_dedup_rates.map { meta, dedup_rates -> tuple(meta.id, dedup_rates) })
+        .join(calc_bams.out.flagstat_out_file.map { meta, flagstat_out -> tuple(meta.id, flagstat_out) })
+        .join(calc_bams.out.picard_insertsize_file.map { meta, picard_insertsize -> tuple(meta.id, picard_insertsize) })
+        .join(calc_bams.out.gatk_doc_file.map { meta, GATK_DOC -> tuple(meta.id, GATK_DOC) })
+        .join(calc_bams.out.freemix_out_file.map { meta, freemix_out -> tuple(meta.id, freemix_out) })
+        .join(calc_bams.out.doc_distance_out_file.map { meta, doc_distance_out_file -> tuple(meta.id, doc_distance_out_file) })
+        .join(calc_bams.out.ch_sex.map { meta, sex_file -> tuple(meta.id, sex_file) })
         .map { id, meta, out_vcf, sqs_file, dedup_rates, flagstat_out, picard_insertsize, GATK_DOC, freemix_out, doc_distance_out_file, sex_file ->
             [meta, out_vcf, sqs_file, dedup_rates, flagstat_out, picard_insertsize, GATK_DOC, freemix_out, doc_distance_out_file, sex_file]
         }
