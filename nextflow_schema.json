@@ -5,6 +5,33 @@
     "description": "Accurate and Efficient Sub-sampling Pipeline for WGS analysis",
     "type": "object",
     "definitions": {
+        "basic_options": {
+            "title": "Basic Options",
+            "type": "object",
+            "description": "Basic pipeline options for running the pipeline",
+            "default": "",
+            "properties": {
+                "help": {
+                    "type": "boolean",
+                    "description": "Display help text.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-question-circle"
+                },
+                "validate_params": {
+                    "type": "boolean",
+                    "description": "Boolean whether to validate parameters against the schema at runtime",
+                    "default": true,
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Workflow name.",
+                    "fa_icon": "fas fa-fingerprint",
+                    "hidden": true
+                }
+            }
+        },
         "input_output_options": {
             "title": "Input/Output Options",
             "type": "object",
@@ -113,6 +140,19 @@
             "fa_icon": "fas fa-check-square",
             "description": "Quality control parameters.",
             "properties": {
+                "lims_qc": {
+                    "type": "boolean",
+                    "description": "Whether to use LIMS QC",
+                    "default": true,
+                    "fa_icon": "fas fa-vial"
+                },
+                "lims_call": {
+                    "type": "boolean",
+                    "description": "Whether to use LIMS API calls for QC results",
+                    "default": true,
+                    "fa_icon": "fas fa-server",
+                    "help_text": "When disabled, the pipeline will skip LIMS API calls and related QC processing"
+                },
                 "target_x": {
                     "type": "integer",
                     "description": "Target coverage depth for subsampled reads",
@@ -187,6 +227,9 @@
         }
     },
     "allOf": [
+        {
+            "$ref": "#/definitions/basic_options"
+        },
         {
             "$ref": "#/definitions/input_output_options"
         },
