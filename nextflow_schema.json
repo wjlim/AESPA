@@ -1,0 +1,206 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/aespa/master/nextflow_schema.json",
+    "title": "AESPA Pipeline Parameters",
+    "description": "Accurate and Efficient Sub-sampling Pipeline for WGS analysis",
+    "type": "object",
+    "definitions": {
+        "input_output_options": {
+            "title": "Input/Output Options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": ["order_info", "sample_sheet", "outdir"],
+            "properties": {
+                "order_info": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to order info file containing sample metadata (tab-separated)",
+                    "help_text": "Must contain columns: SampleID, Project, Institute, Customer, etc.",
+                    "fa_icon": "fas fa-file-alt"
+                },
+                "sample_sheet": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to sample sheet file containing FASTQ information (CSV format)",
+                    "help_text": "Must contain columns: FCID, Lane, SampleID, fastq_1, fastq_2, etc.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved.",
+                    "default": "./results",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "prefix": {
+                    "type": "string",
+                    "description": "Prefix for output files",
+                    "default": "aespa",
+                    "fa_icon": "fas fa-file-signature"
+                }
+            }
+        },
+        "reference_genome_options": {
+            "title": "Reference Genome Options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Reference genome related parameters.",
+            "properties": {
+                "genome": {
+                    "type": "string",
+                    "description": "Name of iGenomes reference.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "If not specified, must provide: fasta, fai, dict, and bwamem2_index"
+                },
+                "fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to reference FASTA file. Required if genome is not specified.",
+                    "fa_icon": "fas fa-file-alt"
+                },
+                "fai": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to reference FASTA index file. Required if genome is not specified.",
+                    "fa_icon": "fas fa-file-alt"
+                },
+                "dict": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to reference dict file. Required if genome is not specified.",
+                    "fa_icon": "fas fa-file-alt"
+                },
+                "bwamem2_index": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Path to BWA-MEM2 index directory. Required if genome is not specified.",
+                    "fa_icon": "fas fa-folder"
+                },
+                "igenomes_base": {
+                    "type": "string",
+                    "description": "Base directory for iGenomes references.",
+                    "default": "s3://ngi-igenomes/igenomes",
+                    "fa_icon": "fas fa-cloud"
+                },
+                "igenomes_ignore": {
+                    "type": "boolean",
+                    "description": "Do not load the iGenomes reference config.",
+                    "fa_icon": "fas fa-ban",
+                    "default": false
+                }
+            }
+        },
+        "alignment_options": {
+            "title": "Alignment Options",
+            "type": "object",
+            "fa_icon": "fas fa-align-left",
+            "description": "Parameters for controlling the alignment process.",
+            "properties": {
+                "aligner": {
+                    "type": "string",
+                    "description": "Alignment tool to use.",
+                    "default": "bwa",
+                    "enum": ["bwa", "iSAAC"],
+                    "help_text": "iSAAC is only available with GRCh38 genome.",
+                    "fa_icon": "fas fa-map"
+                }
+            }
+        },
+        "qc_options": {
+            "title": "QC Options",
+            "type": "object",
+            "fa_icon": "fas fa-check-square",
+            "description": "Quality control parameters.",
+            "properties": {
+                "target_x": {
+                    "type": "integer",
+                    "description": "Target coverage depth for subsampled reads",
+                    "default": 5,
+                    "fa_icon": "fas fa-bullseye"
+                },
+                "coverage_limit": {
+                    "type": "integer",
+                    "description": "Maximum coverage threshold for subsampling",
+                    "default": 40,
+                    "fa_icon": "fas fa-chart-line"
+                },
+                "read_length": {
+                    "type": "integer",
+                    "default": 151,
+                    "description": "Read length for sequencing data"
+                },
+                "genome_size": {
+                    "type": "integer",
+                    "default": 3000000000,
+                    "description": "Genome size for coverage calculation"
+                },
+                "avg_read_size": {
+                    "type": "integer",
+                    "default": 300,
+                    "description": "Average read size"
+                },
+                "sub_limit": {
+                    "type": "number",
+                    "default": 0.6,
+                    "description": "Subsampling ratio threshold"
+                },
+                "freemix_limit": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "Upper limit of freemix value"
+                },
+                "mapping_rate_limit": {
+                    "type": "number",
+                    "default": 89,
+                    "description": "Lower limit of mapping rate"
+                },
+                "deduplicate_rate_limit": {
+                    "type": "number",
+                    "default": 80,
+                    "description": "Lower limit of deduplicate rate"
+                }
+            }
+        },
+        "institutional_config_options": {
+            "title": "Institutional Config Options",
+            "type": "object",
+            "fa_icon": "fas fa-university",
+            "description": "Parameters used to describe centralised config profiles.",
+            "help_text": "These options are used to describe how the pipeline should be run on different infrastructures.",
+            "properties": {
+                "custom_config_version": {
+                    "type": "string",
+                    "description": "Git commit id for Institutional configs.",
+                    "default": "master",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "custom_config_base": {
+                    "type": "string",
+                    "description": "Base directory for Institutional configs.",
+                    "default": "https://raw.githubusercontent.com/nf-core/configs/master",
+                    "hidden": true,
+                    "help_text": "If you're running offline, Nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem."
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/reference_genome_options"
+        },
+        {
+            "$ref": "#/definitions/alignment_options"
+        },
+        {
+            "$ref": "#/definitions/qc_options"
+        },
+        {
+            "$ref": "#/definitions/institutional_config_options"
+        }
+    ]
+} 

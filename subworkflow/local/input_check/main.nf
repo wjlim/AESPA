@@ -1,4 +1,3 @@
-include { raw_data_search } from '../../../modules/local/file_search'
 include { info_check      } from '../../../modules/local/info_check'
 
 workflow INPUT_CHECK {
@@ -9,9 +8,8 @@ workflow INPUT_CHECK {
 
     main:
         
-    raw_data_search(sample_sheet, run_dir)
     info_check(
-        raw_data_search.out.ch_samplesheet_path,
+        sample_sheet,
         order_info
     )
 
