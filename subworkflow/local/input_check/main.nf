@@ -16,8 +16,9 @@ workflow INPUT_CHECK {
         .splitCsv(header:true)
         .map{ row -> 
             def meta = [
-                id:row.UniqueKey,
-                prefix:row.Prefix,
+                id:row.sample_id,
+                prefix:row.prefix,
+                lane:row.lane,
                 fastq_1:row.fastq_1,
                 fastq_2:row.fastq_2
             ]

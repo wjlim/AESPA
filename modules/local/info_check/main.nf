@@ -20,7 +20,7 @@ process info_check {
     # Define required columns
     required_columns = {
         '${sample_sheet}': [
-            'UniqueKey',
+            'sample_id',
             'fastq_1',
             'fastq_2'
         ]
@@ -29,8 +29,7 @@ process info_check {
     # Optional columns for order info
     order_info_columns = [
         'SampleID',
-        'Project',
-        'Lane'
+        'Project'
     ]
 
     try:
@@ -54,21 +53,21 @@ process info_check {
                 if 'SampleID' in samplesheet_df.columns:
                     merged_df = pd.merge(samplesheet_df, order_info_df, on='SampleID', how='left')
                     # Create prefix from order info where available
-                    merged_df['Prefix'] = merged_df.apply(
-                        lambda row: f"{row['Project']}.{row['SampleID']}.L{row['Lane']}"
-                        if pd.notna(row.get('Project')) and pd.notna(row.get('SampleID')) and pd.notna(row.get('Lane'))
-                        else row['UniqueKey'],
+                    merged_df['prefix'] = merged_df.apply(
+                        lambda row: f"{row['Project']}.{row['SampleID']}"
+                        if pd.notna(row.get('Project')) and pd.notna(row.get('SampleID'))
+                        else row['sample_id'],
                         axis=1
                     )
                 else:
-                    merged_df['Prefix'] = merged_df['UniqueKey']
+                    merged_df['prefix'] = merged_df['sample_id']
             else:
-                merged_df['Prefix'] = merged_df['UniqueKey']
+                merged_df['prefix'] = merged_df['sample_id']
         except Exception as e:
             print(f"Warning: Error processing order info file: {e}")
-            merged_df['Prefix'] = merged_df['UniqueKey']
+            merged_df['prefix'] = merged_df['sample_id']
     else:
-        merged_df['Prefix'] = merged_df['UniqueKey']
+        merged_df['prefix'] = merged_df['sample_id']
 
     # Save the merged dataframe
     merged_df.to_csv('${params.prefix}.sample_sheet.valid.merged.csv', index=False)
