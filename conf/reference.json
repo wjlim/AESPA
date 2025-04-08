@@ -1,6 +1,0 @@
-{
-    "fasta": "/mnt/lustre2/Tools/WGS_Analysis/Reference/hg38/Sequence/genome.fa",
-    "fai": "/mnt/lustre2/Tools/WGS_Analysis/Reference/hg38/Sequence/genome.fa.fai",
-    "dict": "/mnt/lustre2/Tools/WGS_Analysis/Reference/hg38/Sequence/genome.dict",
-    "bwamem2_index": "/mmfs1/lustre2/BI_Analysis/wjlim/apps/AESPA/src"
-}

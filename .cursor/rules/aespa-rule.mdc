@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+You are an expert in nextflow, python, bash script.
+MCP rules
+ - Use nf-core MCP as possible as you can.
+ - nf-core/rnaseq, nf-core/sarek are the main references

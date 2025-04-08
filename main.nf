@@ -1,8 +1,5 @@
 #!/usr/bin/env nextflow
-import groovy.json.JsonSlurper
-
 include { AESPA                                        } from "${baseDir}/workflow/aespa.nf"
-include { FIND_RAW_DATA                                } from "${baseDir}/modules/local/find_raw_data"
 include { INPUT_CHECK                                  } from "${baseDir}/subworkflow/local/input_check"
 include { MAKE_DELIVERABLES                            } from "${baseDir}/subworkflow/local/make_deliverables"
 include { MAKE_DELIVERABLES as MERGE_MAKE_DELIVERABLES } from "${baseDir}/subworkflow/local/make_deliverables"
@@ -15,7 +12,24 @@ include { LIMS_API_POST                                } from "${baseDir}/module
 
 workflow {
     main:
-    def config = new JsonSlurper().parseText(file(params.ref_conf).text)
+    // Check mandatory parameters
+    if (!params.genome && !params.fasta) {
+        exit 1, 'Either --genome or --fasta parameter must be provided'
+    }
+
+    // Set up genome variables
+    if (params.genome && params.genomes.containsKey(params.genome)) {
+        fasta = params.genomes[params.genome].fasta
+        fai = params.genomes[params.genome].fai
+        dict = params.genomes[params.genome].dict
+        bwamem2_index = params.genomes[params.genome].bwamem2_index
+    } else {
+        fasta = params.fasta
+        fai = params.fai
+        dict = params.dict
+        bwamem2_index = params.bwamem2_index
+    }
+
     INPUT_CHECK(
         file(params.order_info),
         file(params.sample_sheet),
@@ -24,16 +38,16 @@ workflow {
 
     Channel.of(
         tuple(
-            file(config.fasta),
-            file(config.fai),
-            file(config.dict)
+            file(fasta),
+            file(fai),
+            file(dict)
         ))
         .set { ch_ref_path }
 
     Channel.of(
         tuple(
-            file(config.bwamem2_index),
-            file(config.fasta)
+            file(bwamem2_index),
+            file(fasta)
             )
         )
         .set { ch_bwamem2_index_path }
