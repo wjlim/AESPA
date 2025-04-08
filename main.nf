@@ -85,6 +85,7 @@ workflow {
         .set { ch_bwamem2_index_path }
     INPUT_CHECK.out.ch_merged_samplesheet
         .map { meta, fastq_1, fastq_2 -> 
+            meta.id = meta.prefix ?: meta.id  // Use prefix as id if available, otherwise use existing id
             return tuple(meta, fastq_1, fastq_2)
         }
         .set { ch_samplesheet_mix }

@@ -15,73 +15,62 @@ process info_check {
     """
     #!/usr/bin/env python
     import pandas as pd
-    expected_columns = {
-        '${order_info}': [
-            'SampleID',
-            'Project',
-            'Institute',
-            'Customer',
-            'Librarytype',
-            'Description',
-            'Platform',
-            'Species',
-            'SampleType',
-            'ApplicationType',
-            'RunningType',
-            'RunScale',
-            'Count',
-            'GasketID',
-            'Ref_ver',
-            'SSBaitDesignID',
-            'Contract',
-            'Library Kit',
-            'Library Protocol',
-            'Service Group',
-            'pl Id'
-        ],
+    import os
+
+    # Define required columns
+    required_columns = {
         '${sample_sheet}': [
-            'FCID',
-            'Lane',
-            'SampleID',
-            'SampleRef',
-            'Index Seq',
-            'Description',
-            'Control',
-            'Recipe',
-            'Operator',
-            'Project',
-            'LibraryType',
-            'Species',
-            'ApplicationType',
-            'OrderGrade',
-            'RunScale',
             'UniqueKey',
             'fastq_1',
             'fastq_2'
         ]
     }
 
-    try:
-        order_info_df = pd.read_csv('${order_info}', sep='\t')
-        if not all(col in order_info_df.columns for col in expected_columns['${order_info}']):
-            raise ValueError("Missing columns in ${order_info}")
-    except Exception as e:
-        print(f"Error loading ${order_info}: {e}")
-        exit(1)
+    # Optional columns for order info
+    order_info_columns = [
+        'SampleID',
+        'Project',
+        'Lane'
+    ]
 
     try:
+        # Read sample sheet
         samplesheet_df = pd.read_csv('${sample_sheet}')
-        if not all(col in samplesheet_df.columns for col in expected_columns['${sample_sheet}']):
-            raise ValueError("Missing columns in ${sample_sheet}")
+        if not all(col in samplesheet_df.columns for col in required_columns['${sample_sheet}']):
+            raise ValueError(f"Missing required columns in ${sample_sheet}. Required: {required_columns['${sample_sheet}']}")
     except Exception as e:
         print(f"Error loading ${sample_sheet}: {e}")
         exit(1)
-    
-    # Perform an inner join to include only records present in both dataframes
-    merged_df = pd.merge(samplesheet_df.astype(str), order_info_df.astype(str), on='SampleID', how='inner')
-    
-    if merged_df.shape[0] == 0:
-        raise ValueError("No matching records found after merging sample sheet and order info")
-    merged_df.to_csv('${params.prefix}.sample_sheet.valid.merged.csv', index = False)
+
+    # Initialize merged dataframe with sample sheet
+    merged_df = samplesheet_df.copy()
+
+    # If order info exists, try to merge and create prefix
+    if os.path.exists('${order_info}'):
+        try:
+            order_info_df = pd.read_csv('${order_info}', sep='\\t')
+            if all(col in order_info_df.columns for col in order_info_columns):
+                # Merge on SampleID if present in both
+                if 'SampleID' in samplesheet_df.columns:
+                    merged_df = pd.merge(samplesheet_df, order_info_df, on='SampleID', how='left')
+                    # Create prefix from order info where available
+                    merged_df['Prefix'] = merged_df.apply(
+                        lambda row: f"{row['Project']}.{row['SampleID']}.L{row['Lane']}"
+                        if pd.notna(row.get('Project')) and pd.notna(row.get('SampleID')) and pd.notna(row.get('Lane'))
+                        else row['UniqueKey'],
+                        axis=1
+                    )
+                else:
+                    merged_df['Prefix'] = merged_df['UniqueKey']
+            else:
+                merged_df['Prefix'] = merged_df['UniqueKey']
+        except Exception as e:
+            print(f"Warning: Error processing order info file: {e}")
+            merged_df['Prefix'] = merged_df['UniqueKey']
+    else:
+        merged_df['Prefix'] = merged_df['UniqueKey']
+
+    # Save the merged dataframe
+    merged_df.to_csv('${params.prefix}.sample_sheet.valid.merged.csv', index=False)
     """
 }

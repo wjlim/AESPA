@@ -37,20 +37,20 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["order_info", "sample_sheet", "outdir"],
+            "required": ["sample_sheet", "outdir"],
             "properties": {
                 "order_info": {
                     "type": "string",
                     "format": "file-path",
-                    "description": "Path to order info file containing sample metadata (tab-separated)",
-                    "help_text": "Must contain columns: SampleID, Project, Institute, Customer, etc.",
+                    "description": "Optional path to order info file containing sample metadata (tab-separated)",
+                    "help_text": "If provided, must contain columns: SampleID, Project, Lane. Used for creating sample prefixes in format 'Project.SampleID.LaneX'",
                     "fa_icon": "fas fa-file-alt"
                 },
                 "sample_sheet": {
                     "type": "string",
                     "format": "file-path",
                     "description": "Path to sample sheet file containing FASTQ information (CSV format)",
-                    "help_text": "Must contain columns: FCID, Lane, SampleID, fastq_1, fastq_2, etc.",
+                    "help_text": "Must contain columns: UniqueKey, fastq_1, fastq_2. UniqueKey will be used as prefix if order_info is not provided.",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "outdir": {
