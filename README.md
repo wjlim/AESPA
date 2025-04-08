@@ -2,7 +2,6 @@
 
 ## Overview
 AESPA (Accurate and Efficient Sub-sampling Pipeline for WGS analysis) is a robust and efficient Nextflow-based pipeline designed for whole genome sequencing (WGS) analysis. The pipeline implements a sophisticated QC workflow with subsampling capabilities to optimize resource usage while maintaining high accuracy.
-
 ## Key Features
 
 ### 1. Modular Architecture
