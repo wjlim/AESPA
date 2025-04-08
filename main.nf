@@ -65,8 +65,7 @@ workflow {
 
     INPUT_CHECK(
         file(params.order_info),
-        file(params.sample_sheet),
-        file(params.run_dir),
+        file(params.sample_sheet)
     )
 
     Channel.of(

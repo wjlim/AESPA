@@ -4,7 +4,6 @@ workflow INPUT_CHECK {
     take:
     order_info
     sample_sheet
-    run_dir
 
     main:
         
