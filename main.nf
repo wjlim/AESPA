@@ -83,14 +83,8 @@ workflow {
             )
         )
         .set { ch_bwamem2_index_path }
-    INPUT_CHECK.out.ch_merged_samplesheet
-        .map { meta, fastq_1, fastq_2 -> 
-            meta.id = meta.prefix ?: meta.id  // Use prefix as id if available, otherwise use existing id
-            return tuple(meta, fastq_1, fastq_2)
-        }
-        .set { ch_samplesheet_mix }
         
-    AESPA(ch_samplesheet_mix, ch_ref_path, ch_bwamem2_index_path, true)
+    AESPA(INPUT_CHECK.out.ch_merged_samplesheet, ch_ref_path, ch_bwamem2_index_path, true)
     
     if (params.lims_call) {
         LIMS_QC_API_CALL(AESPA.out.ch_qc_report)
