@@ -1,0 +1,2 @@
+FCID,Lane,SampleID,SampleRef,Index Seq,Description,Control,Recipe,Operator,Project,LibraryType,Species,ApplicationType,OrderGrade,RunScale,UniqueKey,fastq_1,fastq_2
+TEST_FCID,1,TEST_SAMPLE,GRCh38,ATCGATCG,WGS,N,PE150,operator,TEST_PROJECT,WGS,Human,WGS,Standard,Standard,TEST_KEY,test_R1.fastq.gz,test_R2.fastq.gz 

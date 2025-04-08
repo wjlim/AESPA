@@ -102,7 +102,7 @@
                     "description": "Alignment tool to use.",
                     "default": "bwa",
                     "enum": ["bwa", "iSAAC"],
-                    "help_text": "iSAAC is only available with GRCh38 genome.",
+                    "help_text": "iSAAC is only available with GRCh38 genome or local genome settings.",
                     "fa_icon": "fas fa-map"
                 }
             }
