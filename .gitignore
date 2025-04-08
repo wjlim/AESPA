@@ -1,0 +1,49 @@
+# Cursor IDE
+.cursor/
+.cursor/rules/
+
+# Nextflow specific
+work/
+.nextflow/
+.nextflow.*
+*.log
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Results and temp directories
+results/
+tmp/
+temp/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# System specific
+.DS_Store
+Thumbs.db 
