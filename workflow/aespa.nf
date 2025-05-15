@@ -15,7 +15,6 @@ workflow AESPA {
 
     main:
     ch_report = Channel.empty()
-    // Set up genome variables
 
     preprocessing(ch_samplesheet, subsampling)
     ch_report = ch_report.mix(preprocessing.out.ch_sqs_file)
@@ -59,4 +58,5 @@ workflow AESPA {
     emit:
     ch_qc_report = summary_qc.out.qc_report
     ch_qc_json = summary_qc.out.qc_json
+    ch_bams = ch_bams
 }

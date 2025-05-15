@@ -3,6 +3,8 @@
 nextflow.enable.dsl = 2
 
 include { AESPA } from "${baseDir}/workflow/aespa.nf"
+include { AESPA as AESPA_RETRY } from "${baseDir}/workflow/aespa.nf"
+include { LIMS_API_POST } from "${baseDir}/modules/API/LIMS_API_POST"
 
 workflow {
     main:
@@ -33,11 +35,56 @@ workflow {
                 fastq_1:row.fastq_1,
                 fastq_2:row.fastq_2,
                 recipe: row.recipe ?: "151-10-10-151",
-                order: row.order ?: row.sample_id
+                order: row.order ?: row.sample_id,
+                key: row.UniqueKey ?: row.sample_id
             ]
             return tuple( meta, file(row.fastq_1), file(row.fastq_2))
         }
         .set { ch_samplesheet }
     AESPA(ch_samplesheet, ch_ref_path, index, aligner,true)
 
+    AESPA.out.ch_qc_json.map { meta, json ->
+        def content = file(json).text
+        def json_content = new groovy.json.JsonSlurper().parseText(content)
+        def qc_result = json_content[0]
+        freemix = qc_result.xxFreemixAsn.toFloat()
+        mapping_rate = qc_result.xxMapread2.toFloat()
+        dedupped_rate = qc_result.xxDupread2.toFloat()
+        def qc_flag = true
+        if (freemix > params.freemix_limit || mapping_rate < params.mapping_rate_limit || dedupped_rate < params.deduplicate_rate_limit) {
+            qc_flag = false
+        }
+        return tuple(meta, json, qc_flag)
+    }
+    .branch {meta, json, qc_flag ->
+        fail : qc_flag == false
+        pass : qc_flag == true
+    }
+    .set { branched_qc_ch }
+
+    branched_qc_ch.pass.map {meta, json, flag ->
+        [meta, json]
+    }.set { ch_passed_qc }
+
+    def ch_bams = AESPA.out.ch_bams
+    branched_qc_ch.fail.join(ch_bams, failOnMismatch:true)
+    .branch {meta, json, flag, bam, bai ->
+        subsampled: meta.subampling == true
+        not_subsampled: !(meta.subampling == true)
+    }
+    .set { branched_qc_failed }
+
+    branched_qc_failed.subsampled.map {meta, json,flag,bam,bai ->
+        [meta, json, flag, bam, bai]
+    }.set { ch_failed_subsampled_qc }
+
+    branched_qc_failed.not_subsampled.map {meta, json,flag,bam,bai ->
+        [meta, json, flag, bam, bai]
+    }.set { ch_failed_not_subsampled_qc }
+
+    ch_failed_subsampled_qc.map {meta, json,flag,bam,bai ->
+        [meta, meta.fastq_1, meta.fastq_2]
+    }.set { ch_failed_qc }
+
+    AESPA_RETRY(ch_failed_qc, ch_ref_path, index, aligner, false)
 }

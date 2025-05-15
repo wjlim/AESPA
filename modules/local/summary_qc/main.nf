@@ -259,7 +259,7 @@ Sex\t{sex}
 
     # Prepare API request payload
     payload = {
-        "uniqLibNo": "${meta.id}",
+        "uniqLibNo": "${meta.key}",
         "resultPath": "${meta.id}.QC.summary",
         "xxTread": f"{total_reads:.0f}",
         "xxRlength": f"{avg_read_length:.0f}",
