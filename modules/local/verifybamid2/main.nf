@@ -1,12 +1,10 @@
 process calc_freemix_values {
     label "process_low"
-    tag "calc freemix for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
-    conda NXF_OFFLINE == 'true' ?
-        "/mmfs1/lustre2/BI_Analysis/wjlim/anaconda3/envs/calc_bam_stat":
-        "${baseDir}/conf/bam_stat_calculation.yml"
+    tag "calc freemix for ${meta.id}"
+    conda (params.conda_env_path ? "${params.conda_env_path}/calc_bam_stat" : "${moduleDir}/environment.yml")
 
     input:
-    tuple val(meta), path(out_bam), path(out_bai), path(ref), path(ref_fai), path(ref_dict)
+    tuple val(meta), path(inbam), path(inbai), path(ref), path(ref_fai), path(ref_dict)
 
     output:
     tuple val(meta), path( "*.freemix.vb2.selfSM"), emit: vb2_out
@@ -19,7 +17,7 @@ process calc_freemix_values {
     verifybamid2_db_prefix=\${verifybamid2_db_bed%.bed}
     verifybamid2 \
     --SVDPrefix \${verifybamid2_db_prefix} \
-    --BamFile ${out_bam} \
+    --BamFile ${inbam} \
     --Reference ${ref} \
     --Output ${meta.id}.freemix.vb2 \
     --min-MQ 37 \
@@ -28,10 +26,10 @@ process calc_freemix_values {
     --no-orphans \
     --NumPC 4 \
     --Epsilon 1e-11
-    
+
     # Capture the exit status
     vb2_status=\$?
-    
+
     # Create default output file if verifybamid2 fails or doesn't produce output
     if [ \$vb2_status -ne 0 ] || [ ! -f "${meta.id}.freemix.vb2.selfSM" ]; then
         echo -e "#SEQ_ID\\tRG\\tCHIP_ID\\t#SNPS\\t#READS\\tAVG_DP\\tFREEMIX\\tFREELK1\\tFREELK0\\tFREE_RH\\tFREE_RA\\tCHIPMIX\\tCHIPLK1\\tCHIPLK0\\tCHIP_RH\\tCHIP_RA\\tDPREF\\tRDPHET\\tRDPALT" > ${meta.id}.freemix.vb2.selfSM

@@ -1,12 +1,10 @@
 process calc_DOC {
     label "process_low"
-    tag "depth of coverage for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
-    conda NXF_OFFLINE == 'true' ?
-        "${params.conda_env_path}/envs/nf_gatk":
-        "${baseDir}/conf/bam_stat_calculation.gatk.yml"
+    tag "depth of coverage for ${meta.id}"
+    conda (params.conda_env_path ? "${params.conda_env_path}/nf_gatk" : "${moduleDir}/environment.yml")
 
     input:
-    tuple val(meta), path(out_bam), path(out_bai), path(ref), path(ref_fai), path(ref_dict)
+    tuple val(meta), path(inbam), path(inbai), path(ref), path(ref_fai), path(ref_dict)
 
     output:
     tuple val(meta), path( "*.depthofcov.sample_summary"), emit: sample_summary
@@ -16,11 +14,12 @@ process calc_DOC {
     """
     set -e
     java \
-        -Xmx25g \
+        -Xms1G \
+        -Xmx${task.memory.toGiga()}G \
         -jar $GATK3 \
         -T DepthOfCoverage \
         -R ${ref} \
-        -I ${out_bam} \
+        -I ${inbam} \
         -o ${meta.id}.depthofcov \
         -ct 1 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 \
         -omitBaseOutput \

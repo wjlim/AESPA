@@ -1,9 +1,7 @@
 process calc_genome_coverage {
     label "process_low"
-    tag "Get genome cov for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
-    conda NXF_OFFLINE == 'true' ?
-        "${params.conda_env_path}/envs/calc_bam_stat":
-        "${baseDir}/conf/bam_stat_calculation.yml"
+    tag "Get genome cov for ${meta.id}"
+    conda (params.conda_env_path ? "${params.conda_env_path}/calc_bam_stat" : "${moduleDir}/environment.yml")
 
     input:
     tuple val(meta), path(out_bam), path(out_bai)
@@ -21,7 +19,7 @@ process calc_genome_coverage {
         genomecov \\
         -ibam ${out_bam} \\
         > ${meta.id}.genomecov
-    
+
     covX=`grep "^chrX"  ${meta.id}.genomecov | awk '{ x = \$2 * \$3 ; sum += x }; END { print sum }'`
     covY=`grep "^chrY"  ${meta.id}.genomecov | awk '{ x = \$2 * \$3 ; sum += x }; END { print sum }'`
 

@@ -1,0 +1,9 @@
+[
+    {
+        "LocusId": "BRCA1_test",
+        "LocusStructure": "(CAG)*",
+        "ReferenceRegion": "chr17:1002-2000",
+        "VariantId": "chr17_1002_2000",
+        "VariantType": "Repeat"
+    }
+]

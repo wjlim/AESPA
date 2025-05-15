@@ -1,25 +1,23 @@
 process variant_call {
     label "process_medium"
-    tag "strelka variant call for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
-    conda NXF_OFFLINE == 'true' ?
-        "${params.conda_env_path}/envs/variant_call":
-        "${baseDir}/conf/strelka_variant_call.yml"
-    
+    tag "strelka variant call for ${meta.id}"
+    conda (params.conda_env_path ? "${params.conda_env_path}/variant_call" : "${moduleDir}/environment.yml")
+
     input:
-    tuple val(meta), path(out_bam), path(out_bai), path(ref), path(ref_fai), path(ref_dict)
+    tuple val(meta), path(inbam), path(inbai), path(ref), path(ref_fai), path(ref_dict)
 
     output:
     tuple val(meta),  path( "*.vcf.gz*"), emit: raw_vcf_file
 
     script:
     """
-    set -e 
+    set -e
     echo -e "[StrelkaGermline]\nmaxIndelSize = 49\nminMapq = 20\nisWriteRealignedBam = 0\nextraVariantCallerArguments =" \
     > configureStrelkaGermlineWorkflow.py.ini
-    
+
     configureStrelkaGermlineWorkflow.py \\
         --config=configureStrelkaGermlineWorkflow.py.ini \\
-        --bam=${out_bam} \\
+        --bam=${inbam} \\
         --referenceFasta=${ref} \\
         --runDir=VCF
     wait

@@ -1,6 +1,8 @@
 process estimate_total_read {
     label "process_single"
-    tag "Estimating number of total reads to subsample for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
+    tag "Estimating number of total reads to subsample for ${meta.prefix}"
+    container 'wjlim/aespa-preprocessing'
+    conda (params.conda_env_path ? "${params.conda_env_path}/preprocessing" : "${moduleDir}/environment.yml")
 
     input:
     tuple val(meta), path(forward_read), path(reverse_read)
@@ -23,9 +25,9 @@ process estimate_total_read {
 
     total_bp_needed=\$(echo "${target_x} * ${genome_size}" | bc)
     current_bp=\$(echo "\${total_reads} * ${read_length}" | bc)
-    
+
     sub_ratio=\$(echo "scale=4; \${total_bp_needed} / \${current_bp}" | bc) || sub_ratio=1.0
-    
+
     echo "\${sub_ratio}"
     """
 }

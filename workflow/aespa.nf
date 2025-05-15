@@ -1,74 +1,62 @@
-#!/usr/bin/env nextflow
 
-nextflow.enable.dsl=2
-// Import required subworkflows and modules
-include { preprocessing              } from "${baseDir}/subworkflow/local/preprocessing"
-include { iSAAC_alignment_workflow   } from "${baseDir}/subworkflow/local/iSAAC_pipeline"
-include { bwamem2_alignment_workflow } from "${baseDir}/subworkflow/local/bwa_pipeline"
-include { calc_bams                  } from "${baseDir}/subworkflow/local/bam_stat_calculation"
-include { summary_qc                 } from "${baseDir}/modules/local/summary_qc"
+include { preprocessing                                } from "${baseDir}/subworkflow/local/preprocessing"
+include { iSAAC_alignment_workflow                     } from "${baseDir}/subworkflow/local/iSAAC_pipeline"
+include { bwamem2_alignment_workflow                   } from "${baseDir}/subworkflow/local/bwa_pipeline"
+include { calc_bams                                    } from "${baseDir}/subworkflow/local/bam_stat_calculation"
+include { summary_qc                                   } from "${baseDir}/modules/local/summary_qc"
 
 workflow AESPA {
     take:
-    ch_samplesheet          // Input samplesheet channel
-    ch_ref_path            // Reference genome path
-    ch_bwamem2_index_path  // BWA-MEM2 index path
-    subsampling_flag       // Subsampling flag
+    ch_samplesheet
+    ch_ref_path
+    index
+    aligner
+    subsampling
 
     main:
-    preprocessing(ch_samplesheet, subsampling_flag)
+    ch_report = Channel.empty()
+    // Set up genome variables
 
-    // Select and execute alignment workflow based on chosen aligner
-    if (params.aligner == 'iSAAC') {
-        // Run iSAAC alignment pipeline
+    preprocessing(ch_samplesheet, subsampling)
+    ch_report = ch_report.mix(preprocessing.out.ch_sqs_file)
+    ch_report = ch_report.join(preprocessing.out.ch_dedup_rates, failOnMismatch:true)
+    ch_ref_path
+        .map { fasta, fai, dict ->
+            tuple(
+                file(fasta),
+                file(fai),
+                file(dict),
+                file(index)
+            )
+        }
+        .set { ch_ref_path_with_index }
+    if (aligner == "iSAAC") {
         iSAAC_alignment_workflow(
             preprocessing.out.ch_processed_dir,
-            ch_ref_path
+            ch_ref_path_with_index
         )
         ch_bams = iSAAC_alignment_workflow.out.ch_bam
-
-    } else {
-        // Run BWA-MEM2 alignment pipeline
+    } else if (aligner == "bwamem2") {
         bwamem2_alignment_workflow(
             preprocessing.out.ch_sub_samplesheet,
-            ch_bwamem2_index_path
+            file(index)
         )
         ch_bams = bwamem2_alignment_workflow.out.ch_bams
+    } else {
+        throw new Exception("Invalid aligner: ${aligner}")
     }
-        
-    // Calculate various BAM statistics and metrics
-    calc_bams(ch_bams, ch_ref_path)
 
-    // Combine all QC outputs for final summary
-    // Join multiple QC outputs including:
-    // - Filtered VCF
-    // - Sequence Quality Score (SQS)
-    // - Deduplication rates
-    // - Flagstat metrics
-    // - Insert size metrics
-    // - Depth of Coverage
-    // - Contamination estimates (freemix)
-    // - Coverage distribution
-    // - Sex determination
-    calc_bams.out.ch_filtered_vcf
-        .map { meta, out_vcf -> tuple(meta.id, meta, out_vcf) }
-        .join(preprocessing.out.ch_sqs_file.map { meta, sqs_file -> tuple(meta.id, sqs_file) })
-        .join(preprocessing.out.ch_dedup_rates.map { meta, dedup_rates -> tuple(meta.id, dedup_rates) })
-        .join(calc_bams.out.flagstat_out_file.map { meta, flagstat_out -> tuple(meta.id, flagstat_out) })
-        .join(calc_bams.out.picard_insertsize_file.map { meta, picard_insertsize -> tuple(meta.id, picard_insertsize) })
-        .join(calc_bams.out.gatk_doc_file.map { meta, GATK_DOC -> tuple(meta.id, GATK_DOC) })
-        .join(calc_bams.out.freemix_out_file.map { meta, freemix_out -> tuple(meta.id, freemix_out) })
-        .join(calc_bams.out.doc_distance_out_file.map { meta, doc_distance_out_file -> tuple(meta.id, doc_distance_out_file) })
-        .join(calc_bams.out.ch_sex.map { meta, sex_file -> tuple(meta.id, sex_file) })
-        .map { id, meta, out_vcf, sqs_file, dedup_rates, flagstat_out, picard_insertsize, GATK_DOC, freemix_out, doc_distance_out_file, sex_file ->
-            [meta, out_vcf, sqs_file, dedup_rates, flagstat_out, picard_insertsize, GATK_DOC, freemix_out, doc_distance_out_file, sex_file]
-        }
-        .set { ch_summary_qc_input }
-        
-    // Generate final QC summary report
-    summary_qc(ch_summary_qc_input)
+    calc_bams(ch_bams, ch_ref_path)
+    ch_report = ch_report.join(calc_bams.out.flagstat_out_file, failOnMismatch:true)
+    ch_report = ch_report.join(calc_bams.out.picard_insertsize_file, failOnMismatch:true)
+    ch_report = ch_report.join(calc_bams.out.gatk_doc_file, failOnMismatch:true)
+    ch_report = ch_report.join(calc_bams.out.freemix_out_file, failOnMismatch:true)
+    ch_report = ch_report.join(calc_bams.out.doc_distance_out_file, failOnMismatch:true)
+    ch_report = ch_report.join(calc_bams.out.ch_sex, failOnMismatch:true)
+    ch_report = ch_report.join(calc_bams.out.ch_filtered_vcf, failOnMismatch:true)
+    summary_qc(ch_report)
 
     emit:
-    ch_bam = ch_bams
-    ch_qc_report = summary_qc.out.qc_report    // Final QC report output
+    ch_qc_report = summary_qc.out.qc_report
+    ch_qc_json = summary_qc.out.qc_json
 }

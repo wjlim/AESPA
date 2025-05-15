@@ -6,10 +6,9 @@ include { calc_DOC                } from '../../../modules/local/calc_DOC'
 include { calc_distance           } from '../../../modules/local/calc_distance'
 include { calc_PE_insert_size     } from '../../../modules/local/calc_PE_insert_size'
 include { calc_samtools_flagstat  } from '../../../modules/local/calc_samtools_flagstat'
-// include { variant_calling         } from '../../../subworkflow/local/strelka_variant_call'
 include { variant_call            } from '../../../modules/local/strelka'
 include { pass_filter             } from '../../../modules/local/vcf_pass_filter'
-
+include { calc_exhunter           } from '../../../modules/local/calc_exhunter'
 workflow calc_bams {
     take:
     bam_ch
@@ -24,10 +23,11 @@ workflow calc_bams {
     calc_freemix_values(ch_bam_combined)
     calc_genome_coverage(bam_ch)
     calc_DOC(ch_bam_combined)
-    calc_distance(bam_ch, calc_genome_coverage.out.ch_genomecov)
+    ch_bam_combined_with_cov = ch_bam_combined.join(calc_genome_coverage.out.ch_genomecov, failOnMismatch:true)
+    calc_distance(ch_bam_combined_with_cov)
     calc_PE_insert_size(bam_ch)
     calc_samtools_flagstat(bam_ch)
-
+    calc_exhunter(ch_bam_combined)
 
     emit:
     flagstat_out_file = calc_samtools_flagstat.out
@@ -37,4 +37,7 @@ workflow calc_bams {
     doc_distance_out_file = calc_distance.out
     ch_filtered_vcf = pass_filter.out.filtered_vcf
     ch_sex = calc_genome_coverage.out.ch_sex
+    ch_exhunter_json = calc_exhunter.out.ch_exhunter_json
+    ch_exhunter_bam = calc_exhunter.out.ch_exhunter_bam
+    ch_exhunter_vcf = calc_exhunter.out.ch_exhunter_vcf
 }

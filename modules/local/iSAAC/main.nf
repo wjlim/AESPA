@@ -1,20 +1,16 @@
 process iSAAC_alignment {
     label "process_medium"
-    tag "iSAAC_alignment for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
-    // publishDir "${params.outdir}/${meta.sample}/${params.prefix}", mode: 'copy'
-    conda NXF_OFFLINE == 'true' ?
-        "${params.conda_env_path}/envs/iSAAC_align":
-        "${baseDir}/conf/iSAAC_pipeline.yml"
+    tag "iSAAC_alignment for ${meta.id}"
+    container 'wjlim/aespa-isaac'
+    conda "iSAAC_align"
 
     input:
     tuple val(meta), path(preprocessed_dir), path(converted_sample_sheet), path(reference_fasta), path(reference_fai), path(reference_dict)
-    
+
     output:
-    tuple val(meta), path("IsaacAlignment/Projects/${meta.order}/*/sorted.bam"), path("IsaacAlignment/Projects/${meta.order}/*/sorted.bam.bai"), emit: ch_bam
-    
+    tuple val(meta), path("${meta.id}.bam"), path("${meta.id}.bam.bai"), emit: ch_bam
+
     script:
-    // def memoryValue = task.memory.toGiga()
-    // def cpus = Math.max(1, int(memoryValue / 6)) // Ensure at least 1 CPU is allocated
     """
     iSAAC_temp=\$(mktemp -d)
     isaac-align \\
@@ -38,5 +34,7 @@ process iSAAC_alignment {
     --sample-sheet ${converted_sample_sheet} \\
     --bam-gzip-level 7 \\
     --verbosity 1
+    mv IsaacAlignment/Projects/*/*/sorted.bam ${meta.id}.bam
+    mv IsaacAlignment/Projects/*/*/sorted.bam.bai ${meta.id}.bam.bai
     """
 }

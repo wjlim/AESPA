@@ -1,14 +1,12 @@
 # Cursor IDE
 .cursor/
-.cursor/rules/
-
+bin/lims*.sh
 # Nextflow specific
 work/
 .nextflow/
 .nextflow.*
 *.log
 .DS_Store
-
 # Python
 __pycache__/
 *.py[cod]
@@ -46,4 +44,6 @@ temp/
 
 # System specific
 .DS_Store
-Thumbs.db 
+Thumbs.db
+test
+Dockerfile

@@ -1,2 +1,2 @@
 SampleID	Project	Institute	Customer	Librarytype	Description	Platform	Species	SampleType	ApplicationType	RunningType	RunScale	Count	GasketID	Ref_ver	SSBaitDesignID	Contract	Library Kit	Library Protocol	Service Group	pl Id
-TEST_SAMPLE	TEST_PROJECT	TEST_INST	TEST_CUST	WGS	WGS	NovaSeq	Human	DNA	WGS	PE150	Standard	1	TEST_GASKET	GRCh38	NA	TEST_CONTRACT	WGS	Standard	Standard	TEST_PLID 
+TEST_SAMPLE	TEST_PROJECT	TEST_INST	TEST_CUST	WGS	WGS	NovaSeq	Human	DNA	WGS	PE150	Standard	1	TEST_GASKET	GRCh38	NA	TEST_CONTRACT	WGS	Standard	Standard	TEST_PLID

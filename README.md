@@ -81,12 +81,12 @@ params {
     max_memory = 210.GB
     max_cpus = 32
     max_time = 240.h
-    
+
     // QC Thresholds
     freemix_limit = 0.05
     mapping_rate_limit = 88
     deduplicate_rate_limit = 78
-    
+
     // Pipeline Options
     aligner = 'iSAAC'  // or 'bwa'
     target_x = 5       // Target coverage

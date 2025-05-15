@@ -1,0 +1,6 @@
+name: variant_call
+channels:
+  - bioconda
+dependencies:
+  - strelka=2.9.10
+  - gvcftools=0.17.0

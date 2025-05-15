@@ -1,9 +1,8 @@
 process subsampling {
     label "process_single"
-    tag "subsampling for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
-    conda NXF_OFFLINE == 'true' ?
-        "${params.conda_env_path}/envs/RapidQC_preprocessing":
-        "${baseDir}/conf/preprocessing.yml"
+    tag "subsampling for ${meta.prefix}"
+    container 'wjlim/aespa-preprocessing'
+    conda (params.conda_env_path ? "${params.conda_env_path}/preprocessing" : "${moduleDir}/environment.yml")
 
     input:
     tuple val(meta), path(forward_read), path(reverse_read)

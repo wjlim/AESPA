@@ -1,10 +1,11 @@
 process MARK_DUP {
-    tag "MARK duplicates for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
+    tag "MARK duplicates for ${meta.id}"
     label 'process_medium'
 
-    conda NXF_OFFLINE == 'true' ?
-        "${params.conda_env_path}/envs/picard_env":
+    conda (params.conda_env_path ?
+        "${params.conda_env_path}/picard_env":
         "${moduleDir}/environment.yml"
+    )
 
     input:
     tuple val(meta), path(bam)
@@ -12,7 +13,7 @@ process MARK_DUP {
     output:
     tuple val(meta), path("${meta.id}_sorted.bam"), path("${meta.id}_sorted.bai"), emit: ch_dedup_bams
     tuple val(meta), path("*_metrics.txt"), emit: ch_metrics
-    
+
     script:
     def avail_mem = 3
     if (!task.memory) {

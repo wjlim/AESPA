@@ -4,9 +4,10 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python=3.11.3
+  - python=3.8
   - verifybamid2=2.0.1
   - bedtools
+  - bc
   - pip
   - pip:
       - scipy

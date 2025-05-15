@@ -1,0 +1,14 @@
+name: calc_bam_stat
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11.3
+  - verifybamid2
+  - bedtools
+  - bc
+  - pip
+  - pip:
+      - scipy
+      - pysam

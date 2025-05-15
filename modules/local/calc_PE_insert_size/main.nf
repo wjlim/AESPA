@@ -1,24 +1,20 @@
 process calc_PE_insert_size {
     label "process_low"
-    tag "Picard insertsize calculation for ${meta.order}.${meta.sample}.${meta.fc_id}.L00${meta.lane}"
-    conda NXF_OFFLINE == 'true' ?
-        "${params.conda_env_path}/envs/picard_env":
-        "${baseDir}/conf/bam_stat_calculation.picard.yml"
+    tag "Picard insertsize calculation for ${meta.id}"
+    conda (params.conda_env_path ? "${params.conda_env_path}/picard_env" : "${moduleDir}/environment.yml")
 
     input:
-    tuple val(meta), path(out_bam), path(out_bai)
+    tuple val(meta), path(inbam), path(inbai)
 
     output:
-    tuple val(meta), path("*.insert_size_metrics")
+    tuple val(meta), path("${meta.id}.insert_size_metrics")
 
     script:
     """
-    set -e
-    touch ${meta.id}.insert_size_metrics
-    /mmfs1/lustre2/BI_Analysis/bi2/anaconda3/envs/picard_env/bin/picard \\
+    picard \\
         CollectInsertSizeMetrics \\
         H=insert_size_hist.pdf \\
-        I=${out_bam} \\
+        I=${inbam} \\
         O=${meta.id}.insert_size_metrics \\
         VALIDATION_STRINGENCY=LENIENT
     """
