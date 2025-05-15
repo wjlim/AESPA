@@ -47,3 +47,5 @@ temp/
 Thumbs.db
 test
 Dockerfile
+
+.pre-commit-config.*
