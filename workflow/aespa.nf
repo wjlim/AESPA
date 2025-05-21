@@ -1,4 +1,3 @@
-
 include { preprocessing                                } from "${baseDir}/subworkflow/local/preprocessing"
 include { iSAAC_alignment_workflow                     } from "${baseDir}/subworkflow/local/iSAAC_pipeline"
 include { bwamem2_alignment_workflow                   } from "${baseDir}/subworkflow/local/bwa_pipeline"

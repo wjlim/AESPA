@@ -41,6 +41,7 @@ workflow {
             return tuple( meta, file(row.fastq_1), file(row.fastq_2))
         }
         .set { ch_samplesheet }
+
     AESPA(ch_samplesheet, ch_ref_path, index, aligner,true)
 
     AESPA.out.ch_qc_json.map { meta, json ->
@@ -85,6 +86,34 @@ workflow {
     ch_failed_subsampled_qc.map {meta, json,flag,bam,bai ->
         [meta, meta.fastq_1, meta.fastq_2]
     }.set { ch_failed_qc }
-
     AESPA_RETRY(ch_failed_qc, ch_ref_path, index, aligner, false)
+    AESPA_RETRY.out.ch_qc_json.map { meta, json ->
+        def content = file(json).text
+        def json_content = new groovy.json.JsonSlurper().parseText(content)
+        def qc_result = json_content[0]
+        freemix = qc_result.xxFreemixAsn.toFloat()
+        mapping_rate = qc_result.xxMapread2.toFloat()
+        dedupped_rate = qc_result.xxDupread2.toFloat()
+        def qc_flag = true
+        if (freemix > params.freemix_limit || mapping_rate < params.mapping_rate_limit || dedupped_rate < params.deduplicate_rate_limit) {
+            qc_flag = false
+        }
+        return tuple(meta, json, qc_flag)
+    }
+    .set { ch_AESPA_RETRY_qc }
+    def ch_retry_bams = AESPA_RETRY.out.ch_bams
+    ch_AESPA_RETRY_qc.join(ch_retry_bams, failOnMismatch:true)
+    .branch {meta, json, flag, bam, bai ->
+        pass : flag == true
+        fail : flag == false
+    }
+    .set { branched_AESPA_RETRY_qc }
+
+    if (params.blast) {
+        branched_AESPA_RETRY_qc.fail.map {meta, json, flag, bam, bai ->
+            [meta, bam, bai]
+        }.set { ch_failed_blast_qc }
+
+        BLAST(ch_failed_blast_qc)
+    }
 }
