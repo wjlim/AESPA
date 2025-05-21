@@ -10,7 +10,7 @@ class GenomeCoverageAnalyzer:
     def __init__(self, filename):
         self.filename = filename
         self.depth = {}
-    
+
     def _read_coverage_file(self):
         with open(self.filename) as file:
             for line in file:
@@ -49,6 +49,6 @@ class GenomeCoverageAnalyzer:
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit(f"Usage: python {sys.argv[0]} sorted.bam.genomecov")
-    
+
     analyzer = GenomeCoverageAnalyzer(sys.argv[1])
     analyzer.analyze_coverage()

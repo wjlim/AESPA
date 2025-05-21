@@ -35,11 +35,11 @@ def process_vcf(vcf_file):
         for line in file:
             if line.startswith('#'):
                 continue
-            
+
             columns = line.strip().split('\t')
             ref = columns[3]
             alt = columns[4].split(',')
-            
+
             for allele in alt:
                 if len(ref) == 1 and len(allele) == 1:
                     nSNPs += 1

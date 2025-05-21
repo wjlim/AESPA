@@ -1,5 +1,5 @@
 #!/bin/bash
-# Nancy addition to WGS pipeline so we can run BLAST on unmapped reads and delete BAM after to save storage space. 
+# Nancy addition to WGS pipeline so we can run BLAST on unmapped reads and delete BAM after to save storage space.
 
 # time/date for logging purposes
 time=`date +"%F_%T"`
@@ -43,4 +43,3 @@ ln -s ${align_dir}/sorted.bam ${align_dir}/BLAST/.
 
 cd ${align_dir}/BLAST
 sh /mnt/lustre2/BI_Analysis/nancy/wgs/tools/run_blast_unmapped.sh sorted.bam ${sample}
-

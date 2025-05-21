@@ -20,7 +20,7 @@ class Subsampler:
         current_coverage = self.total_read * self.read_length
         assert current_coverage != 0, "The number of total read is 0"
         return total_bp_needed / current_coverage
-    
+
     def sequence_generator(self, file_obj):
         block = ""
         while True:
@@ -49,7 +49,7 @@ class Subsampler:
             gzip.open(self.reverse_out_path, 'wb') as reverse_out:
             forward_gen = self.sequence_generator(forward_read)
             reverse_gen = self.sequence_generator(reverse_read)
-            
+
             while True:
                 try:
                     forward_block = next(forward_gen)

@@ -1,3 +1,4 @@
+---
 name: nf_gatk
 channels:
   - defaults

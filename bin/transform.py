@@ -24,4 +24,4 @@ def transform_json(input_file, output_file):
 
 input_file = sys.argv[1]
 output_file = sys.argv[2]
-transform_json(input_file, output_file) 
+transform_json(input_file, output_file)

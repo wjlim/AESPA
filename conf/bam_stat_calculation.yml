@@ -1,3 +1,4 @@
+---
 name: calc_bam_stat
 channels:
   - defaults

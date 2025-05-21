@@ -29,11 +29,11 @@ for dir in $(find "$PROJECT_DIR" -mindepth 2 -maxdepth 2 -type d); do
     confirm_file="${dir_path}/confirm.txt"
     samplesheet_file="${dir_path}/SampleSheet.csv"
     orderinfo_file="${dir_path}/OrderInfo.txt"
-    
+
     if [ ! -f "$confirm_file" ]; then
         confirm_file="/lustre2/Analysis/Project/${order_num}/${demux_path}/${sample_id}/confirm.txt"
     fi
-    
+
     if [ -f "$confirm_file" ] && [ -f "$samplesheet_file" ] && [ -f "$orderinfo_file" ]; then
         analysis_path=$(awk -F'\t' 'NR==2 {print $3}' "$confirm_file")
         fc_id=$(awk -F',' 'NR==2 {print $1}' "$samplesheet_file")

@@ -117,12 +117,12 @@ graph TD
     B --> D[alignment_workflow]
     B --> E[bam_stat_calculation]
     B --> F[QC_summary]
-    
+
     C --> G[file_processing_modules]
     D --> H[iSAAC/BWA_modules]
     E --> I[QC_modules]
     F --> J[reporting_modules]
-    
+
     I --> K[LIMS_API]
 ```
 
@@ -157,4 +157,4 @@ Modules implement error handling through:
 Module-specific settings are managed through:
 - conda environment files in `conf/`
 - process-specific configurations in `nextflow.config`
-- resource allocation in `base.config` 
+- resource allocation in `base.config`

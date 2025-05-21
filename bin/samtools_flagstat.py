@@ -36,7 +36,7 @@ def process_bam_file(filename):
                     counts["duplicates"] += 1
             else:
                 counts["all_supple_reads"] += 1
-                
+
     return counts
 
 def print_results(counts):
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python script.py <bam_file_path>")
         sys.exit(1)
-    
+
     bam_file_path = sys.argv[1]
     counts = process_bam_file(bam_file_path)
     print_results(counts)

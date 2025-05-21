@@ -1,8 +1,7 @@
 ---
-name: nf_gatk
+name: blastn
 channels:
-  - defaults
   - conda-forge
   - bioconda
 dependencies:
-  - openjdk=8
+  - bioconda::blast=2.16.0

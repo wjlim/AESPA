@@ -34,7 +34,7 @@ def csv2sqs(sr, SampleName=''):
 
 def main():
     args = parse_arguments()
-    
+
     forward_df = pd.read_csv(args.input_file1)
     reverse_df = pd.read_csv(args.input_file2)
     merged_df = pd.concat([forward_df, reverse_df], axis=0).sum()
@@ -44,7 +44,7 @@ def main():
         merged_str = csv2sqs(merged_df, args.sample_name)
         forward_str = csv2sqs(forward_df.iloc[0, :], args.sample_name + '_R1')
         reverse_str = csv2sqs(reverse_df.iloc[0, :], args.sample_name + '_R2')
-        
+
         with open(args.output_file, 'w') as ofile:
             ofile.write(merged_str + '\n')
             ofile.write(forward_str + '\n')
