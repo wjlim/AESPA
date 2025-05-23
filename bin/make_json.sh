@@ -1,5 +1,5 @@
 #!/bin/bash
-root_path=/lustre2/Analysis/BI/WholeGenomeReSeq/AN00019230/VA8P_WGS_2/20240517_227GF2LT4_3
+root_path=
 sample_id=$(basename $(dirname $root_path))
 output_dir=$root_path/AESPA
 
