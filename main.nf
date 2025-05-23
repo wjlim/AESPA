@@ -128,7 +128,7 @@ workflow {
         .set { ch_failed_AESPA_RETRY_qc_json }
         LIMS_API_POST_RETRY_FAIL(ch_failed_AESPA_RETRY_qc_json)
 
-        if (params.blastn_db == null) {
+        if (params.blastn_db != null) {
             ch_failed_not_subsampled_qc.mix(ch_failed_AESPA_RETRY_qc_json)
             .map {meta, json, flag, bam, bai -> [meta, bam, bai] }
             .set { ch_failed_qc_bam }
